@@ -1,0 +1,38 @@
+{
+  "content": [
+    {
+      "tmdbID": 238,
+      "title": "The Godfather",
+      "overview": "The aging patriarch of an organized crime dynasty transfers control of his clandestine empire to his reluctant son.",
+      "releaseDate": "1972-03-24T00:00:00Z",
+      "genres": ["Drama", "Crime"],
+      "contentType": "movie",
+      "posterURL": "https://image.tmdb.org/t/p/w500/3bhkrj58Vtu7enYsRolD1fZdja1.jpg",
+      "backdropURL": "https://image.tmdb.org/t/p/w1280/tmU7GeKVybMWFButWEGl2M4GeiP.jpg",
+      "rating": 9.2,
+      "runtime": 175,
+      "seasons": null,
+      "streamingAvailability": [
+        {"name": "Apple TV", "type": "rent", "price": "$3.99"},
+        {"name": "Amazon Prime", "type": "buy", "price": "$9.99"}
+      ]
+    },
+    {
+      "tmdbID": 1399,
+      "title": "Game of Thrones",
+      "overview": "Seven noble families fight for control of the mythical land of Westeros.",
+      "releaseDate": "2011-04-17T00:00:00Z",
+      "genres": ["Drama", "Fantasy", "Action & Adventure"],
+      "contentType": "tv",
+      "posterURL": "https://image.tmdb.org/t/p/w500/u3bZgnGQ9T01sWNhyveQz0wH0Hl.jpg",
+      "backdropURL": "https://image.tmdb.org/t/p/w1280/suopoADq0k8YZr4dQXcU6pToj6s.jpg",
+      "rating": 9.3,
+      "runtime": null,
+      "seasons": 8,
+      "streamingAvailability": [
+        {"name": "HBO Max", "type": "subscription", "price": null},
+        {"name": "Apple TV", "type": "buy", "price": "$19.99"}
+      ]
+    }
+  ]
+}

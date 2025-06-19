@@ -1,13 +1,13 @@
 //
-//  NextUpAIUITestsLaunchTests.swift
-//  NextUpAIUITests
+//  UpNextAIUITestsLaunchTests.swift
+//  UpNextAIIUITests
 //
 //  Created by Isabel Cuddihy on 6/15/25.
 //
 
 import XCTest
 
-final class NextUpAIUITestsLaunchTests: XCTestCase {
+final class UpNextAIUITestsLaunchTests: XCTestCase {
 
     override class var runsForEachTargetApplicationUIConfiguration: Bool {
         true

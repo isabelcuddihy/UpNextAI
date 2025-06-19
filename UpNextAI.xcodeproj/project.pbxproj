@@ -35,19 +35,19 @@
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedRootGroup section */
-		FDC950DB2DFF625600198F5C /* NextUpAI */ = {
+		FDC950DB2DFF625600198F5C /* UpNextAI */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
-			path = NextUpAI;
+			path = UpNextAI;
 			sourceTree = "<group>";
 		};
-		FDC950EE2DFF625800198F5C /* NextUpAITests */ = {
+		FDC950EE2DFF625800198F5C /* UpNextAITests */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
-			path = NextUpAITests;
+			path = UpNextAITests;
 			sourceTree = "<group>";
 		};
-		FDC950F82DFF625800198F5C /* NextUpAIUITests */ = {
+		FDC950F82DFF625800198F5C /* UpNextAIUITests */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
-			path = NextUpAIUITests;
+			path = UpNextAIUITests;
 			sourceTree = "<group>";
 		};
 /* End PBXFileSystemSynchronizedRootGroup section */
@@ -81,9 +81,9 @@
 			isa = PBXGroup;
 			children = (
 				FDC951082DFF65C100198F5C /* README.swift */,
-				FDC950DB2DFF625600198F5C /* NextUpAI */,
-				FDC950EE2DFF625800198F5C /* NextUpAITests */,
-				FDC950F82DFF625800198F5C /* NextUpAIUITests */,
+				FDC950DB2DFF625600198F5C /* UpNextAI */,
+				FDC950EE2DFF625800198F5C /* UpNextAITests */,
+				FDC950F82DFF625800198F5C /* UpNextAIUITests */,
 				FDC950DA2DFF625600198F5C /* Products */,
 			);
 			sourceTree = "<group>";
@@ -114,7 +114,7 @@
 			dependencies = (
 			);
 			fileSystemSynchronizedGroups = (
-				FDC950DB2DFF625600198F5C /* NextUpAI */,
+				FDC950DB2DFF625600198F5C /* UpNextAI */,
 			);
 			name = NextUpAI;
 			packageProductDependencies = (
@@ -137,7 +137,7 @@
 				FDC950ED2DFF625800198F5C /* PBXTargetDependency */,
 			);
 			fileSystemSynchronizedGroups = (
-				FDC950EE2DFF625800198F5C /* NextUpAITests */,
+				FDC950EE2DFF625800198F5C /* UpNextAITests */,
 			);
 			name = NextUpAITests;
 			packageProductDependencies = (
@@ -160,7 +160,7 @@
 				FDC950F72DFF625800198F5C /* PBXTargetDependency */,
 			);
 			fileSystemSynchronizedGroups = (
-				FDC950F82DFF625800198F5C /* NextUpAIUITests */,
+				FDC950F82DFF625800198F5C /* UpNextAIUITests */,
 			);
 			name = NextUpAIUITests;
 			packageProductDependencies = (
@@ -192,7 +192,7 @@
 					};
 				};
 			};
-			buildConfigurationList = FDC950D42DFF625600198F5C /* Build configuration list for PBXProject "NextUpAI" */;
+			buildConfigurationList = FDC950D42DFF625600198F5C /* Build configuration list for PBXProject "UpNextAI" */;
 			developmentRegion = en;
 			hasScannedForEncodings = 0;
 			knownRegions = (
@@ -528,7 +528,7 @@
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
-		FDC950D42DFF625600198F5C /* Build configuration list for PBXProject "NextUpAI" */ = {
+		FDC950D42DFF625600198F5C /* Build configuration list for PBXProject "UpNextAI" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
 				FDC950FD2DFF625800198F5C /* Debug */,
