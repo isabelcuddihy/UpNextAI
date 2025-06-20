@@ -8,64 +8,52 @@
 import SwiftUI
 
 struct ContentFeedView: View {
-    @State private var movies: [TMDBService.TMDBContent] = []
-    @State private var isLoading = false
-    @State private var errorMessage: String?
+    @StateObject private var viewModel = ContentViewModel()
     
     var body: some View {
         NavigationView {
             ScrollView {
-                LazyVStack(spacing: 16) {
-                    if isLoading {
+                LazyVStack(spacing: 24) {
+                    if viewModel.isLoading {
                         ProgressView("Loading movies...")
                             .frame(maxWidth: .infinity, maxHeight: .infinity)
                             .padding(.top, 100)
-                    } else if movies.isEmpty {
+                    } else if viewModel.shouldShowEmptyState {
                         Text("No movies found")
                             .foregroundColor(.gray)
                             .padding(.top, 100)
                     } else {
-                        ForEach(movies, id: \.id) { movie in
-                            ContentCardView(movie: movie)
+                        ForEach(viewModel.contentSections) { section in
+                            ContentRowView(
+                                title: section.title,
+                                content: section.content,
+                                onItemTap: { movie in
+                                    viewModel.handleMovieTap(movie)
+                                }
+                            )
                         }
                     }
                 }
-                .padding(.horizontal)
+                .padding(.top)
             }
             .navigationTitle("UpNext AI")
             .navigationBarTitleDisplayMode(.large)
             .refreshable {
-                await loadMovies()
+                await viewModel.refresh()
             }
         }
         .task {
-            await loadMovies()
+            await viewModel.loadMainFeed()
         }
-        .alert("Error", isPresented: .constant(errorMessage != nil)) {
+        .alert("Error", isPresented: .constant(viewModel.errorMessage != nil)) {
             Button("OK") {
-                errorMessage = nil
+                viewModel.clearError()
             }
         } message: {
-            if let errorMessage = errorMessage {
+            if let errorMessage = viewModel.errorMessage {
                 Text(errorMessage)
             }
         }
-    }
-    
-    @MainActor
-    private func loadMovies() async {
-        isLoading = true
-        errorMessage = nil
-        
-        do {
-            movies = try await TMDBService.shared.fetchTrending()
-            print("✅ Loaded \(movies.count) movies for feed")
-        } catch {
-            errorMessage = "Failed to load movies: \(error.localizedDescription)"
-            print("❌ Error loading movies: \(error)")
-        }
-        
-        isLoading = false
     }
 }
 
