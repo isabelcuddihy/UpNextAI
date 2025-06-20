@@ -28,15 +28,28 @@
 /* End PBXContainerItemProxy section */
 
 /* Begin PBXFileReference section */
-		FDC950D92DFF625600198F5C /* NextUpAI.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = NextUpAI.app; sourceTree = BUILT_PRODUCTS_DIR; };
-		FDC950EB2DFF625800198F5C /* NextUpAITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = NextUpAITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
-		FDC950F52DFF625800198F5C /* NextUpAIUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = NextUpAIUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+		FDC950D92DFF625600198F5C /* UpNextAI.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = UpNextAI.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		FDC950EB2DFF625800198F5C /* UpNextAITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = UpNextAITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+		FDC950F52DFF625800198F5C /* UpNextAIUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = UpNextAIUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		FDC951082DFF65C100198F5C /* README.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = README.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
+
+/* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
+		FDC951372E04D95500198F5C /* Exceptions for "UpNextAI" folder in "UpNextAI" target */ = {
+			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
+			membershipExceptions = (
+				Info.plist,
+			);
+			target = FDC950D82DFF625600198F5C /* UpNextAI */;
+		};
+/* End PBXFileSystemSynchronizedBuildFileExceptionSet section */
 
 /* Begin PBXFileSystemSynchronizedRootGroup section */
 		FDC950DB2DFF625600198F5C /* UpNextAI */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
+			exceptions = (
+				FDC951372E04D95500198F5C /* Exceptions for "UpNextAI" folder in "UpNextAI" target */,
+			);
 			path = UpNextAI;
 			sourceTree = "<group>";
 		};
@@ -91,9 +104,9 @@
 		FDC950DA2DFF625600198F5C /* Products */ = {
 			isa = PBXGroup;
 			children = (
-				FDC950D92DFF625600198F5C /* NextUpAI.app */,
-				FDC950EB2DFF625800198F5C /* NextUpAITests.xctest */,
-				FDC950F52DFF625800198F5C /* NextUpAIUITests.xctest */,
+				FDC950D92DFF625600198F5C /* UpNextAI.app */,
+				FDC950EB2DFF625800198F5C /* UpNextAITests.xctest */,
+				FDC950F52DFF625800198F5C /* UpNextAIUITests.xctest */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -101,9 +114,9 @@
 /* End PBXGroup section */
 
 /* Begin PBXNativeTarget section */
-		FDC950D82DFF625600198F5C /* NextUpAI */ = {
+		FDC950D82DFF625600198F5C /* UpNextAI */ = {
 			isa = PBXNativeTarget;
-			buildConfigurationList = FDC950FF2DFF625800198F5C /* Build configuration list for PBXNativeTarget "NextUpAI" */;
+			buildConfigurationList = FDC950FF2DFF625800198F5C /* Build configuration list for PBXNativeTarget "UpNextAI" */;
 			buildPhases = (
 				FDC950D52DFF625600198F5C /* Sources */,
 				FDC950D62DFF625600198F5C /* Frameworks */,
@@ -116,16 +129,16 @@
 			fileSystemSynchronizedGroups = (
 				FDC950DB2DFF625600198F5C /* UpNextAI */,
 			);
-			name = NextUpAI;
+			name = UpNextAI;
 			packageProductDependencies = (
 			);
 			productName = NextUpAI;
-			productReference = FDC950D92DFF625600198F5C /* NextUpAI.app */;
+			productReference = FDC950D92DFF625600198F5C /* UpNextAI.app */;
 			productType = "com.apple.product-type.application";
 		};
-		FDC950EA2DFF625800198F5C /* NextUpAITests */ = {
+		FDC950EA2DFF625800198F5C /* UpNextAITests */ = {
 			isa = PBXNativeTarget;
-			buildConfigurationList = FDC951022DFF625800198F5C /* Build configuration list for PBXNativeTarget "NextUpAITests" */;
+			buildConfigurationList = FDC951022DFF625800198F5C /* Build configuration list for PBXNativeTarget "UpNextAITests" */;
 			buildPhases = (
 				FDC950E72DFF625800198F5C /* Sources */,
 				FDC950E82DFF625800198F5C /* Frameworks */,
@@ -139,16 +152,16 @@
 			fileSystemSynchronizedGroups = (
 				FDC950EE2DFF625800198F5C /* UpNextAITests */,
 			);
-			name = NextUpAITests;
+			name = UpNextAITests;
 			packageProductDependencies = (
 			);
 			productName = NextUpAITests;
-			productReference = FDC950EB2DFF625800198F5C /* NextUpAITests.xctest */;
+			productReference = FDC950EB2DFF625800198F5C /* UpNextAITests.xctest */;
 			productType = "com.apple.product-type.bundle.unit-test";
 		};
-		FDC950F42DFF625800198F5C /* NextUpAIUITests */ = {
+		FDC950F42DFF625800198F5C /* UpNextAIUITests */ = {
 			isa = PBXNativeTarget;
-			buildConfigurationList = FDC951052DFF625800198F5C /* Build configuration list for PBXNativeTarget "NextUpAIUITests" */;
+			buildConfigurationList = FDC951052DFF625800198F5C /* Build configuration list for PBXNativeTarget "UpNextAIUITests" */;
 			buildPhases = (
 				FDC950F12DFF625800198F5C /* Sources */,
 				FDC950F22DFF625800198F5C /* Frameworks */,
@@ -162,11 +175,11 @@
 			fileSystemSynchronizedGroups = (
 				FDC950F82DFF625800198F5C /* UpNextAIUITests */,
 			);
-			name = NextUpAIUITests;
+			name = UpNextAIUITests;
 			packageProductDependencies = (
 			);
 			productName = NextUpAIUITests;
-			productReference = FDC950F52DFF625800198F5C /* NextUpAIUITests.xctest */;
+			productReference = FDC950F52DFF625800198F5C /* UpNextAIUITests.xctest */;
 			productType = "com.apple.product-type.bundle.ui-testing";
 		};
 /* End PBXNativeTarget section */
@@ -206,9 +219,9 @@
 			projectDirPath = "";
 			projectRoot = "";
 			targets = (
-				FDC950D82DFF625600198F5C /* NextUpAI */,
-				FDC950EA2DFF625800198F5C /* NextUpAITests */,
-				FDC950F42DFF625800198F5C /* NextUpAIUITests */,
+				FDC950D82DFF625600198F5C /* UpNextAI */,
+				FDC950EA2DFF625800198F5C /* UpNextAITests */,
+				FDC950F42DFF625800198F5C /* UpNextAIUITests */,
 			);
 		};
 /* End PBXProject section */
@@ -265,12 +278,12 @@
 /* Begin PBXTargetDependency section */
 		FDC950ED2DFF625800198F5C /* PBXTargetDependency */ = {
 			isa = PBXTargetDependency;
-			target = FDC950D82DFF625600198F5C /* NextUpAI */;
+			target = FDC950D82DFF625600198F5C /* UpNextAI */;
 			targetProxy = FDC950EC2DFF625800198F5C /* PBXContainerItemProxy */;
 		};
 		FDC950F72DFF625800198F5C /* PBXTargetDependency */ = {
 			isa = PBXTargetDependency;
-			target = FDC950D82DFF625600198F5C /* NextUpAI */;
+			target = FDC950D82DFF625600198F5C /* UpNextAI */;
 			targetProxy = FDC950F62DFF625800198F5C /* PBXContainerItemProxy */;
 		};
 /* End PBXTargetDependency section */
@@ -407,6 +420,7 @@
 				DEVELOPMENT_TEAM = 7CTR9HN4L4;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = UpNextAI/Info.plist;
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
@@ -435,6 +449,7 @@
 				DEVELOPMENT_TEAM = 7CTR9HN4L4;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = UpNextAI/Info.plist;
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
@@ -537,7 +552,7 @@
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
 		};
-		FDC950FF2DFF625800198F5C /* Build configuration list for PBXNativeTarget "NextUpAI" */ = {
+		FDC950FF2DFF625800198F5C /* Build configuration list for PBXNativeTarget "UpNextAI" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
 				FDC951002DFF625800198F5C /* Debug */,
@@ -546,7 +561,7 @@
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
 		};
-		FDC951022DFF625800198F5C /* Build configuration list for PBXNativeTarget "NextUpAITests" */ = {
+		FDC951022DFF625800198F5C /* Build configuration list for PBXNativeTarget "UpNextAITests" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
 				FDC951032DFF625800198F5C /* Debug */,
@@ -555,7 +570,7 @@
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
 		};
-		FDC951052DFF625800198F5C /* Build configuration list for PBXNativeTarget "NextUpAIUITests" */ = {
+		FDC951052DFF625800198F5C /* Build configuration list for PBXNativeTarget "UpNextAIUITests" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
 				FDC951062DFF625800198F5C /* Debug */,

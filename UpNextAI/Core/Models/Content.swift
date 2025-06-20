@@ -1,11 +1,11 @@
 import Foundation
 
-enum ContentType: String, CaseIterable {
+enum ContentType: String, CaseIterable, Codable {
     case movie = "movie"
     case tvShow = "tv"
 }
 
-enum Genre: String, CaseIterable {
+enum Genre: String, CaseIterable, Codable {
     case action = "Action"
     case adventure = "Adventure"
     case comedy = "Comedy"
@@ -27,7 +27,7 @@ struct StreamingService: Codable, Hashable {
 }
 
 struct Content: Identifiable, Hashable, Codable {
-    let id = UUID()
+    let id: UUID
     let tmdbID: Int
     let title: String
     let overview: String
@@ -40,6 +40,23 @@ struct Content: Identifiable, Hashable, Codable {
     let runtime: Int? // minutes for movies
     let seasons: Int? // for TV shows
     let streamingAvailability: [StreamingService]
+    
+    // Custom initializer for creating new content
+    init(tmdbID: Int, title: String, overview: String, releaseDate: Date, genres: [String], contentType: ContentType, posterURL: String? = nil, backdropURL: String? = nil, rating: Double, runtime: Int? = nil, seasons: Int? = nil, streamingAvailability: [StreamingService] = []) {
+        self.id = UUID()
+        self.tmdbID = tmdbID
+        self.title = title
+        self.overview = overview
+        self.releaseDate = releaseDate
+        self.genres = genres
+        self.contentType = contentType
+        self.posterURL = posterURL
+        self.backdropURL = backdropURL
+        self.rating = rating
+        self.runtime = runtime
+        self.seasons = seasons
+        self.streamingAvailability = streamingAvailability
+    }
     
     // Computed properties for display
     var formattedDate: String {

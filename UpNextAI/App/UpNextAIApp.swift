@@ -15,8 +15,8 @@ struct UpNextAIApp: App {
     var body: some Scene {
         WindowGroup {
             ContentView()
-                .environment(\.managedObjectContext, coreDataStack.mainContext)
-                .environmentObject(coreDataStack)
+             ///   .environment(\.managedObjectContext, coreDataStack.mainContext)
+             //   .environmentObject(coreDataStack)
         }
     }
 }
