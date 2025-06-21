@@ -44,13 +44,19 @@ class ContentViewModel: ObservableObject {
         do {
             // Load multiple content sections concurrently
             async let trendingContent = tmdbService.fetchTrending()
-            async let popularContent = tmdbService.fetchPopular()
-            async let topRatedContent = tmdbService.fetchTopRated()
+            async let popularMovies = tmdbService.fetchPopularMovies()        // ← Fixed: Movie-specific
+            async let topRatedMovies = tmdbService.fetchTopRatedMovies()      // ← Fixed: Movie-specific
+            async let popularTVShows = tmdbService.fetchPopularTVShows()      // ← Fixed: TV-specific
+            async let topRatedTVShows = tmdbService.fetchTopRatedTVShows()    // ← Fixed: TV-specific
+            async let airingToday = tmdbService.fetchAiringToday()            // ← New: TV shows airing today
             
             // Wait for all requests to complete
             let trending = try await trendingContent
-            let popular = try await popularContent
-            let topRated = try await topRatedContent
+            let movies = try await popularMovies
+            let topMovies = try await topRatedMovies
+            let tvShows = try await popularTVShows
+            let topTV = try await topRatedTVShows
+            let airing = try await airingToday
             
             // Create content sections
             contentSections = [
@@ -60,14 +66,29 @@ class ContentViewModel: ObservableObject {
                     category: .trending
                 ),
                 ContentSection(
-                    title: "Popular",
-                    content: popular,
-                    category: .popular
+                    title: "Popular Movies",
+                    content: movies,
+                    category: .moviePopular
                 ),
                 ContentSection(
-                    title: "Critically Acclaimed",
-                    content: topRated,
-                    category: .topRated
+                    title: "Popular TV Shows",        // ← Fixed: Using actual TV shows
+                    content: tvShows,
+                    category: .tvPopular
+                ),
+                ContentSection(
+                    title: "Top Rated Movies",
+                    content: topMovies,
+                    category: .movieTopRated
+                ),
+                ContentSection(
+                    title: "Top Rated TV Shows",      // ← Fixed: Using actual TV shows
+                    content: topTV,
+                    category: .tvTopRated
+                ),
+                ContentSection(
+                    title: "Airing Today",           // ← New: Fresh TV episodes
+                    content: airing,
+                    category: .tvAiringToday
                 )
             ]
             
@@ -98,9 +119,9 @@ class ContentViewModel: ObservableObject {
             // Add popular as well
             let popular = try await tmdbService.fetchPopular()
             sections.append(ContentSection(
-                title: "Popular",
+                title: "Popular Movies",
                 content: popular,
-                category: .popular
+                category: .moviePopular
             ))
             
             // TODO: Add genre-specific sections when you implement fetchByGenre in TMDBService

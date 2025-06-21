@@ -3,6 +3,8 @@ import Foundation
 enum ContentType: String, CaseIterable, Codable {
     case movie = "movie"
     case tvShow = "tv"
+    case mixed = "mixed"
+    
 }
 
 enum Genre: String, CaseIterable, Codable {

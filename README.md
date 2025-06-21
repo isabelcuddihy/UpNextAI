@@ -5,7 +5,7 @@
 //  Created by Isabel Cuddihy on 6/15/25.
 //
 
-# UpNextAI 🎬
+#UpNextAI 🎬
 
 **Intelligent Movie Discovery with AI-Powered Recommendations**
 
@@ -13,14 +13,14 @@ UpNextAI is a privacy-first iOS app that helps users discover their next favorit
 
 ## ✨ Features
 
-### Current Features
+###Current Features
 - **Real Movie Data**: Integration with TMDB API for trending movies, ratings, and posters
 - **Beautiful UI**: Netflix-inspired interface with smooth scrolling and professional design
 - **User Interactions**: Like/dislike system for learning preferences
 - **Pull-to-Refresh**: Always get the latest trending content
 - **Privacy-First**: No authentication required, all data stays on-device
 
-### Coming Soon
+###Coming Soon
 - **Netflix-Style Browse**: Grid layout with detailed movie pages
 - **Smart Onboarding**: Quick preference setup for personalized recommendations
 - **Streaming Availability**: See where to watch on Netflix, Disney+, Hulu, and more

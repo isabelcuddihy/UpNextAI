@@ -36,10 +36,13 @@ struct ContentRowView: View {
             ScrollView(.horizontal, showsIndicators: false) {
                 LazyHStack(spacing: 12) {
                     ForEach(content, id: \.id) { movie in
-                        ContentPosterView(movie: movie)
-                            .onTapGesture {
-                                onItemTap(movie)
-                            }
+                        NavigationLink(destination: ContentDetailView(content: movie)) {
+                            ContentPosterView(movie: movie)
+                        }
+                        .buttonStyle(PlainButtonStyle())
+                        .onTapGesture {
+                            onItemTap(movie)
+                        }
                     }
                 }
                 .padding(.horizontal)
@@ -71,7 +74,7 @@ struct ContentPosterView: View {
             .clipShape(RoundedRectangle(cornerRadius: 8))
             
             // Movie title (optional, can remove for cleaner look)
-            Text(movie.title ?? "Untitled")
+            Text(movie.displayTitle)
                 .font(.caption)
                 .fontWeight(.medium)
                 .lineLimit(2)
@@ -87,9 +90,11 @@ private func constructPosterURL(from path: String?) -> URL? {
 }
 
 #Preview {
-    ContentRowView(
-        title: "Trending Now",
-        content: [],
-        onItemTap: { _ in }
-    )
+    NavigationView {
+        ContentRowView(
+            title: "Trending Now",
+            content: [],
+            onItemTap: { _ in }
+        )
+    }
 }
