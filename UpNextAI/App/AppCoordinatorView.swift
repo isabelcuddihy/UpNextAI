@@ -58,7 +58,6 @@ struct LoadingView: View {
 // Placeholder for main app
 struct MainAppView: View {
     var body: some View {
-        Text("Main App - Coming Soon!")
-            .font(.largeTitle)
+        ContentFeedView()
     }
 }

@@ -192,7 +192,7 @@ struct ContentDetailView: View {
         .padding(.top, 20)
     }
     
-    // MARK: - Streaming Availability Section - NEW
+    // MARK: - Streaming Availability Section - SIMPLIFIED
     private func streamingAvailabilitySection() -> some View {
         VStack(alignment: .leading, spacing: 12) {
             Text("Where to Watch")
@@ -200,94 +200,142 @@ struct ContentDetailView: View {
                 .fontWeight(.semibold)
                 .padding(.horizontal, 20)
             
-            VStack(spacing: 12) {
-                // Subscription Services (Mock data for now)
-                if !mockSubscriptionServices.isEmpty {
-                    VStack(alignment: .leading, spacing: 8) {
-                        Text("Included with subscription")
-                            .font(.subheadline)
-                            .foregroundColor(.secondary)
-                            .padding(.horizontal, 20)
-                        
-                        ScrollView(.horizontal, showsIndicators: false) {
-                            HStack(spacing: 12) {
-                                ForEach(mockSubscriptionServices, id: \.name) { service in
-                                    HStack(spacing: 8) {
-                                        // Service icon using SF Symbols
-                                        Image(systemName: iconForService(service.name))
-                                            .font(.title2)
-                                            .foregroundColor(colorForService(service.name))
-                                            .frame(width: 24, height: 24)
-                                        Text(service.name)
-                                            .font(.subheadline)
-                                            .fontWeight(.medium)
-                                    }
-                                    .padding(.horizontal, 12)
-                                    .padding(.vertical, 8)
-                                    .background(Color.green.opacity(0.1))
-                                    .foregroundColor(.green)
-                                    .clipShape(RoundedRectangle(cornerRadius: 8))
-                                }
-                            }
-                            .padding(.horizontal, 20)
-                        }
-                    }
-                }
-                
-                // Rental/Purchase Options (Mock data for now)
-                if !mockRentalServices.isEmpty {
-                    VStack(alignment: .leading, spacing: 8) {
-                        Text("Rent or buy")
-                            .font(.subheadline)
-                            .foregroundColor(.secondary)
-                            .padding(.horizontal, 20)
-                        
-                        ScrollView(.horizontal, showsIndicators: false) {
-                            HStack(spacing: 12) {
-                                ForEach(mockRentalServices, id: \.name) { service in
-                                    VStack(spacing: 4) {
-                                        HStack(spacing: 6) {
-                                            Image(systemName: iconForService(service.name))
-                                                .font(.title3)
-                                                .foregroundColor(colorForService(service.name))
-                                                .frame(width: 20, height: 20)
-                                            Text(service.name)
-                                                .font(.caption)
-                                                .fontWeight(.medium)
-                                        }
-                                        if let price = service.price {
-                                            Text("from \(price)")
-                                                .font(.caption2)
-                                                .foregroundColor(.secondary)
-                                        }
-                                    }
-                                    .padding(.horizontal, 10)
-                                    .padding(.vertical, 6)
-                                    .background(Color.blue.opacity(0.1))
-                                    .foregroundColor(.blue)
-                                    .clipShape(RoundedRectangle(cornerRadius: 6))
-                                }
-                            }
-                            .padding(.horizontal, 20)
-                        }
-                    }
-                }
-                
-                // Not available message
-                if mockSubscriptionServices.isEmpty && mockRentalServices.isEmpty {
-                    HStack {
-                        Image(systemName: "exclamationmark.triangle")
-                            .foregroundColor(.orange)
-                        Text("Streaming availability coming soon")
-                            .font(.subheadline)
-                            .foregroundColor(.secondary)
-                    }
-                    .padding(.horizontal, 20)
-                }
+            if let providers = viewModel.watchProviders {
+                streamingProvidersContent(providers: providers)
+            } else {
+                loadingStreamingContent()
             }
         }
         .padding(.top, 20)
     }
+
+    // Break into separate functions
+    private func streamingProvidersContent(providers: WatchProviders) -> some View {
+        VStack(spacing: 12) {
+            // Subscription services
+            if let subscriptionServices = providers.flatrate, !subscriptionServices.isEmpty {
+                subscriptionServicesView(services: subscriptionServices)
+            }
+            
+            // Rental services
+            if let rentalServices = providers.rent, !rentalServices.isEmpty {
+                rentalServicesView(services: rentalServices)
+            }
+            
+            // No providers
+            if (providers.flatrate?.isEmpty ?? true) && (providers.rent?.isEmpty ?? true) {
+                noProvidersView()
+            }
+        }
+    }
+
+    private func subscriptionServicesView(services: [WatchProvider]) -> some View {
+        VStack(alignment: .leading, spacing: 8) {
+            Text("Included with subscription")
+                .font(.subheadline)
+                .foregroundColor(.secondary)
+                .padding(.horizontal, 20)
+            
+            ScrollView(.horizontal, showsIndicators: false) {
+                HStack(spacing: 12) {
+                    ForEach(services, id: \.providerId) { service in
+                        subscriptionServiceCard(service: service)
+                    }
+                }
+                .padding(.horizontal, 20)
+            }
+        }
+    }
+
+    private func subscriptionServiceCard(service: WatchProvider) -> some View {
+        HStack(spacing: 8) {
+            AsyncImage(url: URL(string: service.logoPath!)) { image in
+                image
+                    .resizable()
+                    .aspectRatio(contentMode: .fit)
+            } placeholder: {
+                Rectangle()
+                    .fill(Color.gray.opacity(0.3))
+            }
+            .frame(width: 24, height: 24)
+            .clipShape(RoundedRectangle(cornerRadius: 4))
+            
+            Text(service.providerName)
+                .font(.subheadline)
+                .fontWeight(.medium)
+        }
+        .padding(.horizontal, 12)
+        .padding(.vertical, 8)
+        .background(Color.green.opacity(0.1))
+        .foregroundColor(.green)
+        .clipShape(RoundedRectangle(cornerRadius: 8))
+    }
+
+    private func rentalServicesView(services: [WatchProvider]) -> some View {
+        VStack(alignment: .leading, spacing: 8) {
+            Text("Rent or buy")
+                .font(.subheadline)
+                .foregroundColor(.secondary)
+                .padding(.horizontal, 20)
+            
+            ScrollView(.horizontal, showsIndicators: false) {
+                HStack(spacing: 12) {
+                    ForEach(services, id: \.providerId) { service in
+                        rentalServiceCard(service: service)
+                    }
+                }
+                .padding(.horizontal, 20)
+            }
+        }
+    }
+
+    private func rentalServiceCard(service: WatchProvider) -> some View {
+        VStack(spacing: 4) {
+            HStack(spacing: 6) {
+                AsyncImage(url: URL(string: service.logoPath!)) { image in
+                    image
+                        .resizable()
+                        .aspectRatio(contentMode: .fit)
+                } placeholder: {
+                    Rectangle()
+                        .fill(Color.gray.opacity(0.3))
+                }
+                .frame(width: 20, height: 20)
+                .clipShape(RoundedRectangle(cornerRadius: 3))
+                
+                Text(service.providerName)
+                    .font(.caption)
+                    .fontWeight(.medium)
+            }
+            
+            Text("Available")
+                .font(.caption2)
+                .foregroundColor(.secondary)
+        }
+        .padding(.horizontal, 10)
+        .padding(.vertical, 6)
+        .background(Color.blue.opacity(0.1))
+        .foregroundColor(.blue)
+        .clipShape(RoundedRectangle(cornerRadius: 6))
+    }
+
+    private func loadingStreamingContent() -> some View {
+        Text("Loading streaming availability...")
+            .foregroundColor(.secondary)
+            .padding(.horizontal, 20)
+    }
+
+    private func noProvidersView() -> some View {
+        HStack {
+            Image(systemName: "exclamationmark.triangle")
+                .foregroundColor(.orange)
+            Text("Not currently available for streaming")
+                .font(.subheadline)
+                .foregroundColor(.secondary)
+        }
+        .padding(.horizontal, 20)
+    }
+    
     
     // MARK: - Action Buttons Section
     private func actionButtonsSection() -> some View {

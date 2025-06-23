@@ -101,15 +101,19 @@ struct OnboardingTVSelectionView: View {
                 }
                 
                 Button {
-                     // Updated to use coordinator
-                     Task {
-                         try await coordinator.saveTVPreferences(Array(selectedShows))
-                     }
-                 } label: {
-                     HStack {
-                         Text("Start Discovering!")
-                         Image(systemName: "sparkles")
-                     }
+                    // Updated to use coordinator with proper error handling
+                    Task {
+                        do {
+                            try await coordinator.saveTVPreferences(Array(selectedShows))
+                        } catch {
+                            print("❌ Failed to save TV preferences: \(error)")
+                        }
+                    }
+                } label: {
+                    HStack {
+                        Text("Start Discovering!")
+                        Image(systemName: "sparkles")
+                    }
                     .font(.headline)
                     .foregroundColor(.white)
                     .frame(maxWidth: .infinity)

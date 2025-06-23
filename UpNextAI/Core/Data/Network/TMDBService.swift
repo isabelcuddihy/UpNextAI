@@ -29,6 +29,8 @@ class TMDBService {
         case horrorMovies
         case romanceMovies
         case documentaries
+        case fantasyMovies
+        case animationMovies
         
         // TV-specific endpoints
         case tvPopular
@@ -43,13 +45,13 @@ class TMDBService {
         
         func path(with apiKey: String) -> String {
             switch self {
-            // Mixed content
+                // Mixed content
             case .trending:
                 return "/trending/all/week?api_key=\(apiKey)&language=en-US"
             case .search(let query):
                 return "/search/multi?api_key=\(apiKey)&language=en-US&query=\(query.addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed) ?? "")"
                 
-            // Movie endpoints
+                // Movie endpoints
             case .moviePopular:
                 return "/movie/popular?api_key=\(apiKey)&language=en-US"
             case .movieTopRated:
@@ -65,7 +67,12 @@ class TMDBService {
             case .documentaries:
                 return "/discover/movie?api_key=\(apiKey)&with_genres=99"
                 
-            // TV endpoints
+            case .fantasyMovies:
+                return "/discover/movie?api_key=\(apiKey)&with_genres=14"  // Fantasy genre ID
+            case .animationMovies:
+                return "/discover/movie?api_key=\(apiKey)&with_genres=16"  // Animation genre ID
+                
+                // TV endpoints
             case .tvPopular:
                 return "/tv/popular?api_key=\(apiKey)&language=en-US"
             case .tvTopRated:
@@ -238,6 +245,10 @@ class TMDBService {
             endpoint = .romanceMovies
         case "documentary":
             endpoint = .documentaries
+        case "fantasy":           // ADD THIS
+            endpoint = .fantasyMovies
+        case "animation":         // ADD THIS
+            endpoint = .animationMovies
         case "drama tv", "tv drama":
             endpoint = .dramaTVShows
         case "comedy tv", "tv comedy":
@@ -250,24 +261,25 @@ class TMDBService {
         return try await fetchContent(from: endpoint)
     }
 }
+    
+    // MARK: - Supporting Types
+    enum TMDBError: Error {
+        case invalidURL
+        case invalidResponse
+        case decodingError
+    }
+    
+    // MARK: - Additional Enums and Type Aliases
+    enum SearchContentType {
+        case movie
+        case tv
+    }
+    
+    enum TMDBContentType {
+        case movie
+        case tvShow
+    }
 
-// MARK: - Supporting Types
-enum TMDBError: Error {
-    case invalidURL
-    case invalidResponse
-    case decodingError
-}
-
-// MARK: - Additional Enums and Type Aliases
-enum SearchContentType {
-    case movie
-    case tv
-}
-
-enum TMDBContentType {
-    case movie
-    case tvShow
-}
 
 // MARK: - TMDBService Detail Extensions
 extension TMDBService {
@@ -442,8 +454,69 @@ extension TMDBService {
             throw TMDBError.decodingError
         }
     }
+   
+    func fetchWatchProviders(for contentId: Int, contentType: TMDBContentType) async throws -> WatchProviders? {
+        let typeString = contentType == .movie ? "movie" : "tv"
+        let urlString = "\(baseURL)/\(typeString)/\(contentId)/watch/providers?api_key=\(apiKey)"
+        
+        print("🔍 Fetching watch providers from: \(urlString)")
+        
+        guard let url = URL(string: urlString) else {
+            throw TMDBError.invalidURL
+        }
+        
+        var request = URLRequest(url: url)
+        request.setValue("Bearer \(accessToken)", forHTTPHeaderField: "Authorization")
+        request.setValue("application/json", forHTTPHeaderField: "Content-Type")
+        
+        let (data, response) = try await URLSession.shared.data(for: request)
+        
+        guard let httpResponse = response as? HTTPURLResponse,
+              httpResponse.statusCode == 200 else {
+            print("❌ Watch providers API error: \(response)")
+            throw TMDBError.invalidResponse
+        }
+        
+        do {
+            let watchResponse = try JSONDecoder().decode(WatchProvidersResponse.self, from: data)
+            let usProviders = watchResponse.results?["US"]
+            
+            print("📺 Found providers for US:")
+            print("   Subscription: \(usProviders?.flatrate?.map { $0.providerName } ?? [])")
+            print("   Rental: \(usProviders?.rent?.map { $0.providerName } ?? [])")
+            print("   Purchase: \(usProviders?.buy?.map { $0.providerName } ?? [])")
+            
+            return usProviders
+        } catch {
+            print("❌ Watch providers decoding error: \(error)")
+            throw TMDBError.decodingError
+        }
+    }
 }
 
+struct WatchProvidersResponse: Codable {
+    let results: [String: WatchProviders]?
+}
+
+
+struct WatchProviders: Codable {
+    let link: String?
+    let flatrate: [WatchProvider]? // Subscription services
+    let rent: [WatchProvider]?     // Rental options
+    let buy: [WatchProvider]?      // Purchase options
+}
+
+struct WatchProvider: Codable {
+    let providerId: Int
+    let providerName: String
+    let logoPath: String?
+    
+    private enum CodingKeys: String, CodingKey {
+        case providerId = "provider_id"
+        case providerName = "provider_name"
+        case logoPath = "logo_path"
+    }
+}
 // MARK: - Detail Response Models
 
 struct MovieDetailsResponse: Codable {
@@ -543,3 +616,4 @@ struct TMDBVideo: Codable {
     let site: String
     let type: String
 }
+

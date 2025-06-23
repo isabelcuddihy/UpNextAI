@@ -67,6 +67,7 @@ struct GenreSelectionView: View {
                 }
                 
                 Button {
+                    
                     onContinue(Array(selectedGenres))
                 } label: {
                     HStack {

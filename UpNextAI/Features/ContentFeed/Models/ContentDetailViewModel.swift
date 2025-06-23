@@ -45,23 +45,26 @@ class ContentDetailViewModel: ObservableObject {
     
     // MARK: - Public Methods
     
-    /// Load all details for the given content
+    @Published var watchProviders: WatchProviders?
+
+    // Add this call to your loadDetails method
     func loadDetails(for content: TMDBService.TMDBContent) async {
         isLoading = true
         errorMessage = nil
         
         do {
-            // Load details based on content type
+            // Your existing code...
             if content.isMovie {
                 await loadMovieDetails(movieId: content.id)
             } else if content.isTVShow {
                 await loadTVShowDetails(tvShowId: content.id)
             }
             
-            // Load similar content (works for both movies and TV shows)
             await loadSimilarContent(for: content)
             
-            // Load user preferences for this content
+            // ADD THIS LINE - Load real streaming data
+            await loadWatchProviders(for: content)
+            
             loadUserPreferences(for: content)
             
         } catch {
@@ -69,6 +72,19 @@ class ContentDetailViewModel: ObservableObject {
         }
         
         isLoading = false
+    }
+
+    // ADD THIS METHOD if you don't have it
+    private func loadWatchProviders(for content: TMDBService.TMDBContent) async {
+        do {
+            let contentType = getContentType(for: content)
+            watchProviders = try await tmdbService.fetchWatchProviders(for: content.id, contentType: contentType)
+            print("✅ Loaded watch providers: \(watchProviders?.flatrate?.count ?? 0) subscription, \(watchProviders?.rent?.count ?? 0) rental")
+        } catch {
+            print("⚠️ Failed to load watch providers: \(error)")
+            // Don't throw - streaming data is nice to have but not critical
+            watchProviders = nil
+        }
     }
     
     // MARK: - User Interaction Methods
@@ -216,7 +232,7 @@ class ContentDetailViewModel: ObservableObject {
         
         // TODO: Send to ML backend for learning
         let contentType: UserContentType = content.isMovie ? .movie : .tvShow
-        let interaction = UserInteraction(
+        _ = UserInteraction(
             tmdbId: content.id,
             contentType: contentType,
             interactionType: interactionType,

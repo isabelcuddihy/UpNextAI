@@ -26,14 +26,20 @@ struct OnboardingContainerView: View {
             
         case .genreSelection:
             GenreSelectionView { genres in
-                coordinator.saveGenres(genres)
+                Task {
+                    do {
+                        try await coordinator.saveGenres(genres)
+                    } catch {
+                        print("❌ Failed to save genres: \(error)")
+                    }
+                }
             }
             
         case .filmSelection:
-            OnboardingMovieSelectionView(coordinator: coordinator)  // Pass coordinator
+            OnboardingMovieSelectionView(coordinator: coordinator)
             
         case .tvSelection:
-            OnboardingTVSelectionView(coordinator: coordinator)     // Pass coordinator
+            OnboardingTVSelectionView(coordinator: coordinator)
         }
     }
 }

@@ -100,20 +100,25 @@ struct OnboardingMovieSelectionView: View {
                 
                 Button {
                        // Updated to use coordinator
-                       coordinator.saveMoviePreferences(Array(selectedMovies))
-                   } label: {
-                       HStack {
-                           Text("Continue to TV Shows")
-                           Image(systemName: "arrow.right")
-                       }
-                
-                    .font(.headline)
-                    .foregroundColor(.white)
-                    .frame(maxWidth: .infinity)
-                    .padding(.vertical, 16)
-                    .background(Color.blue)
-                    .clipShape(RoundedRectangle(cornerRadius: 12))
-                }
+                    Task {
+                            do {
+                                try await coordinator.saveMoviePreferences(Array(selectedMovies))
+                            } catch {
+                                print("❌ Failed to save movie preferences: \(error)")
+                            }
+                        }
+                    } label: {
+                        HStack {
+                            Text("Continue to TV Shows")
+                            Image(systemName: "arrow.right")
+                        }
+                        .font(.headline)
+                        .foregroundColor(.white)
+                        .frame(maxWidth: .infinity)
+                        .padding(.vertical, 16)
+                        .background(Color.blue)
+                        .clipShape(RoundedRectangle(cornerRadius: 12))
+                    }
                 .disabled(selectedMovies.isEmpty)
                 .opacity(selectedMovies.isEmpty ? 0.6 : 1.0)
             }

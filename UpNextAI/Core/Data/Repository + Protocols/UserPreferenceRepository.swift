@@ -21,7 +21,7 @@ protocol UserPreferenceRepositoryProtocol {
 }
 
 class UserPreferenceRepository: UserPreferenceRepositoryProtocol {
-    private let coreDataStack: CoreDataStack
+    let coreDataStack: CoreDataStack
     
     init(coreDataStack: CoreDataStack = CoreDataStack.shared) {
         self.coreDataStack = coreDataStack
@@ -63,12 +63,21 @@ class UserPreferenceRepository: UserPreferenceRepositoryProtocol {
         let context = coreDataStack.mainContext
         
         try await context.perform {
+            // Always fetch the profile fresh from the database
+            let profileRequest: NSFetchRequest<UserProfileCoreData> = UserProfileCoreData.fetchRequest()
+            profileRequest.predicate = NSPredicate(format: "id == %@", profile.id as CVarArg)
+            profileRequest.fetchLimit = 1
+            
+            guard let profileInContext = try context.fetch(profileRequest).first else {
+                throw NSError(domain: "ProfileNotFound", code: 404, userInfo: nil)
+            }
+            
             // Check if preference already exists
-            let existingPreference = try self.findPreference(in: context, profile: profile, type: type, name: name, tmdbId: tmdbId)
+            let existingPreference = try self.findPreference(in: context, profile: profileInContext, type: type, name: name, tmdbId: tmdbId)
             
             if let existing = existingPreference {
-                // Update existing preference
                 existing.isLiked = isLiked
+                print("📝 Updated existing preference: \(name)")
             } else {
                 // Create new preference
                 let preference = UserPreferenceCoreData(context: context)
@@ -77,11 +86,20 @@ class UserPreferenceRepository: UserPreferenceRepositoryProtocol {
                 preference.tmdbId = tmdbId ?? 0
                 preference.isLiked = isLiked
                 preference.createdAt = Date()
-                preference.profile = profile
+                preference.profile = profileInContext
+                print("✅ Created new preference: \(name) (\(type))")
             }
             
-            profile.lastUpdated = Date()
+            profileInContext.lastUpdated = Date()
+            
+            // Save and verify
             try context.save()
+            
+            // Verify the save worked
+            let verifyRequest: NSFetchRequest<UserPreferenceCoreData> = UserPreferenceCoreData.fetchRequest()
+            verifyRequest.predicate = NSPredicate(format: "profile == %@", profileInContext)
+            let allPrefs = try context.fetch(verifyRequest)
+            print("🔍 Total preferences after save: \(allPrefs.count)")
         }
     }
     
@@ -89,9 +107,18 @@ class UserPreferenceRepository: UserPreferenceRepositoryProtocol {
         let context = coreDataStack.mainContext
         
         return try await context.perform {
+            // Always fetch the profile fresh
+            let profileRequest: NSFetchRequest<UserProfileCoreData> = UserProfileCoreData.fetchRequest()
+            profileRequest.predicate = NSPredicate(format: "id == %@", profile.id as CVarArg)
+            profileRequest.fetchLimit = 1
+            
+            guard let profileInContext = try context.fetch(profileRequest).first else {
+                return []
+            }
+            
             let request: NSFetchRequest<UserPreferenceCoreData> = UserPreferenceCoreData.fetchRequest()
             
-            var predicates: [NSPredicate] = [NSPredicate(format: "profile == %@", profile)]
+            var predicates: [NSPredicate] = [NSPredicate(format: "profile == %@", profileInContext)]
             
             if let type = type {
                 predicates.append(NSPredicate(format: "type == %@", type))
@@ -100,7 +127,10 @@ class UserPreferenceRepository: UserPreferenceRepositoryProtocol {
             request.predicate = NSCompoundPredicate(andPredicateWithSubpredicates: predicates)
             request.sortDescriptors = [NSSortDescriptor(keyPath: \UserPreferenceCoreData.createdAt, ascending: false)]
             
-            return try context.fetch(request)
+            let results = try context.fetch(request)
+            print("🔍 Repository found \(results.count) preferences of type: \(type ?? "all")")
+            
+            return results
         }
     }
     
