@@ -8,6 +8,8 @@ import SwiftUI
 
 struct ContentDetailView: View {
     @Environment(\.dismiss) private var dismiss
+    @EnvironmentObject var userRepository: UserPreferenceRepository
+    @EnvironmentObject var tabCommunicationService: TabCommunicationService
     @StateObject private var viewModel = ContentDetailViewModel()
     
     let content: TMDBService.TMDBContent
@@ -16,7 +18,9 @@ struct ContentDetailView: View {
         self.content = content
     }
     
+    
     var body: some View {
+        
         ZStack(alignment: .topLeading) {
             // Main Content - ScrollView
             GeometryReader { geometry in
@@ -73,6 +77,7 @@ struct ContentDetailView: View {
         .onAppear {
             Task {
                 await viewModel.loadDetails(for: content)
+                await viewModel.loadWatchlistStatus(for: content, userRepository: userRepository)
             }
         }
     }
@@ -131,14 +136,14 @@ struct ContentDetailView: View {
                             .foregroundColor(.white.opacity(0.8))
                     }
                     
-                    if content.voteAverage > 0 {
+                    if content.voteAverage ?? 5.1 > 0 {
                         Text("•")
                             .foregroundColor(.white.opacity(0.8))
                         HStack(spacing: 4) {
                             Image(systemName: "star.fill")
                                 .foregroundColor(.yellow)
                                 .font(.caption)
-                            Text(String(format: "%.1f", content.voteAverage))
+                            Text(String(format: "%.1f", content.voteAverage ?? 5.1))
                                 .foregroundColor(.white.opacity(0.8))
                         }
                     }
@@ -342,7 +347,9 @@ struct ContentDetailView: View {
         HStack(spacing: 20) {
             // Watchlist Button
             Button(action: {
-                viewModel.toggleWatchlist(content)
+                Task {
+                        await viewModel.toggleWatchlist(content, userRepository: userRepository, tabService: tabCommunicationService)
+                    }
             }) {
                 HStack {
                     Image(systemName: viewModel.isInWatchlist ? "checkmark" : "plus")
@@ -356,25 +363,6 @@ struct ContentDetailView: View {
                 .clipShape(RoundedRectangle(cornerRadius: 8))
             }
             
-            // Like/Dislike Buttons
-            HStack(spacing: 12) {
-                Button(action: {
-                    viewModel.likeContent(content)
-                }) {
-                    Image(systemName: viewModel.isLiked ? "hand.thumbsup.fill" : "hand.thumbsup")
-                        .font(.title2)
-                        .foregroundColor(viewModel.isLiked ? .green : .primary)
-                }
-                
-                Button(action: {
-                    viewModel.dislikeContent(content)
-                }) {
-                    Image(systemName: viewModel.isDisliked ? "hand.thumbsdown.fill" : "hand.thumbsdown")
-                        .font(.title2)
-                        .foregroundColor(viewModel.isDisliked ? .red : .primary)
-                }
-            }
-            .padding(.horizontal, 20)
         }
         .padding(.horizontal, 20)
         .padding(.top, 20)
@@ -463,12 +451,12 @@ struct ContentDetailView: View {
                                         .lineLimit(2)
                                         .multilineTextAlignment(.center)
                                     
-                                    if similarItem.voteAverage > 0 {
+                                    if similarItem.voteAverage ?? 5.1 > 0 {
                                         HStack(spacing: 2) {
                                             Image(systemName: "star.fill")
                                                 .font(.system(size: 8))
                                                 .foregroundColor(.yellow)
-                                            Text(String(format: "%.1f", similarItem.voteAverage))
+                                            Text(String(format: "%.1f", similarItem.voteAverage ?? 5.1))
                                                 .font(.caption2)
                                                 .foregroundColor(.secondary)
                                         }

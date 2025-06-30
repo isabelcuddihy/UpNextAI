@@ -25,6 +25,7 @@ class AppCoordinator: ObservableObject {
     // MARK: - Child Coordinators
     var onboardingCoordinator: OnboardingCoordinator?
     var mainAppCoordinator: AppCoordinator?
+    var tabCoordinator: TabCoordinator?
     
     // MARK: - Current User State
     private var currentUserProfile: UserProfileCoreData?
@@ -50,7 +51,7 @@ class AppCoordinator: ObservableObject {
                 
                 if existingProfile.hasCompletedOnboarding {
                     print("🏠 User completed onboarding, going to main app")
-                    currentFlow = .mainApp
+                    showTabCoordinator()
                 } else {
                     print("📝 User needs to complete onboarding")
                     showOnboarding()
@@ -74,6 +75,7 @@ class AppCoordinator: ObservableObject {
             onCompletion: { [weak self] completedProfile in
                 // This closure gets called when onboarding finishes
                 self?.currentUserProfile = completedProfile
+                self?.showTabCoordinator()
                 self?.currentFlow = .mainApp
             }
         )
@@ -82,15 +84,15 @@ class AppCoordinator: ObservableObject {
         onboardingCoordinator?.start()
     }
 
-    func showMainApp() {
-        mainAppCoordinator = AppCoordinator(/* what parameters? */)
+    func showTabCoordinator() {
+        tabCoordinator = TabCoordinator()
         currentFlow = .mainApp
     }
 
     func onboardingCompleted(userProfile: UserProfileCoreData) {
         currentUserProfile = userProfile
         // TODO: Update hasCompletedOnboarding to true
-        showMainApp()
+        showTabCoordinator()
     }
     
     // MARK: - User Profile Management

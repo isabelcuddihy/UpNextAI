@@ -48,7 +48,7 @@ struct ContentCardView: View {
                         Image(systemName: "star.fill")
                             .foregroundColor(.yellow)
                             .font(.caption)
-                        Text(String(format: "%.1f", movie.voteAverage))
+                        Text(String(format: "%.1f", movie.voteAverage ?? 5.1))
                             .font(.caption)
                             .foregroundColor(.secondary)
                     }

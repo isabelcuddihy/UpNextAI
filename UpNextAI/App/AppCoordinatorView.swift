@@ -33,7 +33,11 @@ struct AppCoordinatorView: View {
                 }
                 
             case .mainApp:
-                MainAppView() // You'll create this later
+                if let tabCoordinator = appCoordinator.tabCoordinator {
+                    tabCoordinator.createTabView()
+                } else {
+                    Text("Loading...")
+                }
             }
         }
         .onAppear {

@@ -8,7 +8,8 @@
 import SwiftUI
 
 struct ContentFeedView: View {
-    @StateObject private var viewModel = ContentViewModel()
+    @EnvironmentObject var viewModel: ContentViewModel
+    @State private var hasAppeared = false
     
     var body: some View {
         NavigationView {
@@ -19,11 +20,20 @@ struct ContentFeedView: View {
                             .frame(maxWidth: .infinity, maxHeight: .infinity)
                             .padding(.top, 100)
                     } else if viewModel.shouldShowEmptyState {
-                        Text("No movies found")
-                            .foregroundColor(.gray)
-                            .padding(.top, 100)
+                        VStack(spacing: 16) {
+                            Text("No movies found")
+                                .foregroundColor(.gray)
+                            
+                            Button("Retry") {
+                                Task {
+                                    await viewModel.refresh()
+                                }
+                            }
+                            .buttonStyle(.bordered)
+                        }
+                        .padding(.top, 100)
                     } else {
-                        ForEach(viewModel.contentSections) { section in
+                        ForEach(viewModel.contentSections, id: \.title) { section in
                             ContentRowView(
                                 title: section.title,
                                 content: section.content,
@@ -42,8 +52,17 @@ struct ContentFeedView: View {
                 await viewModel.refresh()
             }
         }
-        .task {
-            await viewModel.loadMainFeed()
+        // FIXED: Better view lifecycle management
+        .onAppear {
+            if !hasAppeared {
+                hasAppeared = true
+                print("🎬 ContentFeedView appeared for first time, loading content...")
+                Task {
+                    await viewModel.loadMainFeed()
+                }
+            } else {
+                print("🎬 ContentFeedView reappeared, content should already be loaded")
+            }
         }
         .alert("Error", isPresented: .constant(viewModel.errorMessage != nil)) {
             Button("OK") {

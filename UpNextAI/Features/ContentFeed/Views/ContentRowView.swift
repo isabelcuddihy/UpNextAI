@@ -22,13 +22,6 @@ struct ContentRowView: View {
                     .foregroundColor(.primary)
                 
                 Spacer()
-                
-                // Optional "See All" button for future
-                Button("See All") {
-                    // TODO: Navigate to full category view
-                }
-                .font(.caption)
-                .foregroundColor(.secondary)
             }
             .padding(.horizontal)
             

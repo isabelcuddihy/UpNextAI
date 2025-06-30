@@ -20,7 +20,7 @@ protocol UserPreferenceRepositoryProtocol {
     
 }
 
-class UserPreferenceRepository: UserPreferenceRepositoryProtocol {
+class UserPreferenceRepository: UserPreferenceRepositoryProtocol, ObservableObject {
     let coreDataStack: CoreDataStack
     
     init(coreDataStack: CoreDataStack = CoreDataStack.shared) {
@@ -146,7 +146,7 @@ class UserPreferenceRepository: UserPreferenceRepositoryProtocol {
                 let preference = UserPreferenceCoreData(context: context)
                 preference.type = type
                 preference.name = name
-                preference.tmdbId = tmdbId ?? 0
+                preference.tmdbId = Int64(tmdbId ?? 0)
                 preference.isLiked = true
                 preference.createdAt = Date()
                 preference.profile = profile

@@ -7,7 +7,6 @@
 
 import Foundation
 
-import Foundation
 
 // MARK: - Repository Protocol
 protocol ContentRepositoryProtocol {
@@ -19,7 +18,7 @@ protocol ContentRepositoryProtocol {
 }
 
 // MARK: - Content Repository Implementation
-class ContentRepository: ContentRepositoryProtocol {
+class ContentRepository: ContentRepositoryProtocol, ObservableObject {
     private let tmdbService: TMDBService
     private let mapper: TMDBContentMapper
     
@@ -35,12 +34,12 @@ class ContentRepository: ContentRepositoryProtocol {
     }
     
     func fetchPopularContent() async throws -> [Content] {
-        let tmdbContent = try await tmdbService.fetchPopular()
+        let tmdbContent = try await tmdbService.fetchTrending()
         return mapper.mapToDomainModels(tmdbContent)
     }
     
     func fetchTopRatedContent() async throws -> [Content] {
-        let tmdbContent = try await tmdbService.fetchTopRated()
+        let tmdbContent = try await tmdbService.fetchTopRatedMovies()
         return mapper.mapToDomainModels(tmdbContent)
     }
     
@@ -52,6 +51,24 @@ class ContentRepository: ContentRepositoryProtocol {
     func searchContent(query: String) async throws -> [Content] {
         let tmdbContent = try await tmdbService.fetchContent(from: .search(query: query))
         return mapper.mapToDomainModels(tmdbContent)
+    }
+
+    func fetchWatchlistContent(tmdbIds: [(id: Int, type: String)]) async throws -> [Content] {
+        var watchlistContent: [Content] = []
+        
+        for item in tmdbIds {
+            do {
+                let tmdbContent = try await tmdbService.fetchContentById(item.id, type: item.type)
+                if let content = mapper.mapToDomainModel(tmdbContent) {
+                    watchlistContent.append(content)
+                }
+            } catch {
+                print("Failed to fetch content \(item.id): \(error)")
+                // Continue with other items even if one fails
+            }
+        }
+        
+        return watchlistContent
     }
 }
 
@@ -67,7 +84,7 @@ class TMDBContentMapper {
         return tmdbContent.compactMap { mapToDomainModel($0) }
     }
     
-    private func mapToDomainModel(_ tmdbContent: TMDBService.TMDBContent) -> Content? {
+    func mapToDomainModel(_ tmdbContent: TMDBService.TMDBContent) -> Content? {
         // Parse release date
         let releaseDate: Date
         if let dateString = tmdbContent.releaseDate ?? tmdbContent.firstAirDate,
@@ -87,7 +104,7 @@ class TMDBContentMapper {
         }
         
         // Map genre IDs to genre names (simplified mapping)
-        let genres = mapGenreIds(tmdbContent.genreIds)
+        let genres = mapGenreIds(tmdbContent.genreIds ?? [])
         
         return Content(
             tmdbID: tmdbContent.id,
@@ -98,7 +115,7 @@ class TMDBContentMapper {
             contentType: contentType,
             posterURL: tmdbContent.fullPosterURL.isEmpty ? nil : tmdbContent.fullPosterURL,
             backdropURL: tmdbContent.fullBackdropURL.isEmpty ? nil : tmdbContent.fullBackdropURL,
-            rating: tmdbContent.voteAverage,
+            rating: tmdbContent.voteAverage ?? 5.1,
             runtime: nil, // Would need additional API call to get runtime
             seasons: nil, // Would need additional API call to get seasons
             streamingAvailability: [] // Will implement later with streaming API

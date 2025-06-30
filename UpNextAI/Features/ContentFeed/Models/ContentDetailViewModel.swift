@@ -28,7 +28,13 @@ class ContentDetailViewModel: ObservableObject {
     
     // MARK: - Private Properties
     private let tmdbService = TMDBService.shared
+    private var currentUserProfile: UserProfileCoreData?
     private var cancellables = Set<AnyCancellable>()
+    
+    
+    init() {
+        
+    }
     
     // MARK: - Computed Properties
     var hasCredits: Bool {
@@ -47,29 +53,20 @@ class ContentDetailViewModel: ObservableObject {
     
     @Published var watchProviders: WatchProviders?
 
-    // Add this call to your loadDetails method
     func loadDetails(for content: TMDBService.TMDBContent) async {
         isLoading = true
         errorMessage = nil
         
-        do {
-            // Your existing code...
-            if content.isMovie {
-                await loadMovieDetails(movieId: content.id)
-            } else if content.isTVShow {
-                await loadTVShowDetails(tvShowId: content.id)
-            }
-            
-            await loadSimilarContent(for: content)
-            
-            // ADD THIS LINE - Load real streaming data
-            await loadWatchProviders(for: content)
-            
-            loadUserPreferences(for: content)
-            
-        } catch {
-            handleError(error)
+        // Remove do-catch - these functions handle their own errors
+        if content.isMovie {
+            await loadMovieDetails(movieId: content.id)
+        } else if content.isTVShow {
+            await loadTVShowDetails(tvShowId: content.id)
         }
+        
+        await loadSimilarContent(for: content)
+        await loadWatchProviders(for: content)
+        loadUserPreferences(for: content)
         
         isLoading = false
     }
@@ -89,44 +86,63 @@ class ContentDetailViewModel: ObservableObject {
     
     // MARK: - User Interaction Methods
     
-    func likeContent(_ content: TMDBService.TMDBContent) {
-        isLiked.toggle()
-        if isLiked {
-            isDisliked = false
-            print("❤️ Liked: \(content.displayTitle)")
-            // TODO: Save to Core Data and update ML model
-            saveUserInteraction(content: content, interactionType: .liked)
-        } else {
-            removeUserInteraction(content: content, interactionType: .liked)
-        }
-    }
-    
-    func dislikeContent(_ content: TMDBService.TMDBContent) {
-        isDisliked.toggle()
-        if isDisliked {
-            isLiked = false
-            print("👎 Disliked: \(content.displayTitle)")
-            // TODO: Save to Core Data and update ML model
-            saveUserInteraction(content: content, interactionType: .disliked)
-        } else {
-            removeUserInteraction(content: content, interactionType: .disliked)
-        }
-    }
-    
-    func toggleWatchlist(_ content: TMDBService.TMDBContent) {
-        isInWatchlist.toggle()
-        if isInWatchlist {
-            print("📚 Added to watchlist: \(content.displayTitle)")
-            saveUserInteraction(content: content, interactionType: .addedToWatchlist)
-        } else {
-            print("🗑️ Removed from watchlist: \(content.displayTitle)")
-            removeUserInteraction(content: content, interactionType: .addedToWatchlist)
-        }
-        // TODO: Save to Core Data
-    }
     
     func clearError() {
         errorMessage = nil
+    }
+
+    func loadWatchlistStatus(for content: TMDBService.TMDBContent, userRepository: UserPreferenceRepository) async {
+        do {
+            // Get current user profile
+            guard let profile = try await userRepository.getUserProfile() else { return }
+            
+            // Check for watchlist preference
+            let watchlistType = content.isMovie ? "movie_watchlist" : "tv_watchlist"
+            let preferences = try await userRepository.getPreferences(for: profile, type: watchlistType)
+            
+            // Check if this specific content is in watchlist
+            let isInWatchlist = preferences.contains { $0.tmdbId == content.id && $0.isLiked }
+            
+            await MainActor.run {
+                self.isInWatchlist = isInWatchlist
+            }
+        } catch {
+            print("⚠️ Failed to load watchlist status: \(error)")
+        }
+    }
+
+    func toggleWatchlist(_ content: TMDBService.TMDBContent, userRepository: UserPreferenceRepository, tabService: TabCommunicationService) async {
+        do {
+            guard let profile = try await userRepository.getUserProfile() else { return }
+            
+            let watchlistType = content.isMovie ? "movie_watchlist" : "tv_watchlist"
+            
+            if isInWatchlist {
+                // Remove from watchlist - DELETE the record
+                let preferences = try await userRepository.getPreferences(for: profile, type: watchlistType)
+                if let existingPref = preferences.first(where: { $0.tmdbId == content.id }) {
+                    try await userRepository.deletePreference(existingPref)
+                    print("🗑️ Deleted from watchlist: \(content.displayTitle)")
+                }
+            } else {
+                // Add to watchlist - CREATE new record
+                try await userRepository.addPreference(
+                    to: profile,
+                    type: watchlistType,
+                    name: content.displayTitle,
+                    tmdbId: Int64(content.id),
+                    isLiked: true
+                )
+                print("📚 Added to watchlist: \(content.displayTitle)")
+            }
+            
+            await MainActor.run {
+                self.isInWatchlist.toggle()
+            }
+            
+        } catch {
+            print("❌ Failed to toggle watchlist: \(error)")
+        }
     }
     
     // MARK: - Private Methods
@@ -135,6 +151,7 @@ class ContentDetailViewModel: ObservableObject {
     private func getContentType(for content: TMDBService.TMDBContent) -> TMDBContentType {
         return content.isMovie ? .movie : .tvShow
     }
+    
     
     private func loadMovieDetails(movieId: Int) async {
         do {
@@ -237,7 +254,7 @@ class ContentDetailViewModel: ObservableObject {
             contentType: contentType,
             interactionType: interactionType,
             timestamp: Date(),
-            genres: content.genreIds.map { String($0) }
+            genres: content.genreIds?.map { String($0) } ?? []
         )
         
         // This is where you'd send to your backend ML service

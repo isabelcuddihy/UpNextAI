@@ -32,6 +32,14 @@ class TMDBService {
         case fantasyMovies
         case animationMovies
         
+        // NEW MOVIE ENDPOINTS
+        case superheroMovies
+        case historicalMovies
+        case trueCrimeDocumentaries
+        case bollywoodMovies
+        case animeMovies  // Update from animationMovies
+        case kidsAndFamilyMovies
+        
         // TV-specific endpoints
         case tvPopular
         case tvTopRated
@@ -40,8 +48,29 @@ class TMDBService {
         case actionTVShows
         case comedyTVShows
         case dramaTVShows
-        case crimeTV
+        case crimeTV  // Remove or rename to trueCrimeTV
         case kdramas
+        
+        // NEW TV ENDPOINTS
+        case superheroTVShows
+        case historicalTVShows
+        case trueCrimeTVShows
+        case britishTVShows
+        case telenovelas
+        case animeTVShows
+        case kidsAndFamilyTVShows
+        
+        // Movie-specific endpoints (add these)
+        case sciFiMovies
+        case thrillerMovies
+        case adventureMovies
+        case mysteryMovies
+
+        // TV-specific endpoints (add these)
+        case sciFiTVShows
+        case thrillerTVShows
+        case adventureTVShows
+        case mysteryTVShows
         
         func path(with apiKey: String) -> String {
             switch self {
@@ -72,6 +101,29 @@ class TMDBService {
             case .animationMovies:
                 return "/discover/movie?api_key=\(apiKey)&with_genres=16"  // Animation genre ID
                 
+            case .superheroMovies:
+                return "/discover/movie?api_key=\(apiKey)&with_keywords=superhero"
+            case .historicalMovies:
+                return "/discover/movie?api_key=\(apiKey)&with_genres=36"  // History genre
+            case .trueCrimeDocumentaries:
+                return "/discover/movie?api_key=\(apiKey)&with_genres=99&with_keywords=true-crime"  // Documentary + true crime
+            case .bollywoodMovies:
+                return "/discover/movie?api_key=\(apiKey)&with_origin_country=IN&with_original_language=hi"  // India + Hindi
+            case .animeMovies:
+                return "/discover/movie?api_key=\(apiKey)&with_genres=16&with_origin_country=JP"  // Animation + Japan
+            case .kidsAndFamilyMovies:
+                return "/discover/movie?api_key=\(apiKey)&with_genres=10751"  // Family genre
+                
+                // Movie endpoints
+                case .sciFiMovies:
+                    return "/discover/movie?api_key=\(apiKey)&with_genres=878"  // Science Fiction
+                case .thrillerMovies:
+                    return "/discover/movie?api_key=\(apiKey)&with_genres=53"   // Thriller
+                case .adventureMovies:
+                    return "/discover/movie?api_key=\(apiKey)&with_genres=12"   // Adventure
+                case .mysteryMovies:
+                    return "/discover/movie?api_key=\(apiKey)&with_genres=9648" // Mystery
+                
                 // TV endpoints
             case .tvPopular:
                 return "/tv/popular?api_key=\(apiKey)&language=en-US"
@@ -91,6 +143,31 @@ class TMDBService {
                 return "/discover/tv?api_key=\(apiKey)&with_genres=80"
             case .kdramas:
                 return "/discover/tv?api_key=\(apiKey)&with_genres=18&with_origin_country=KR" // Korean dramas
+                
+            case .superheroTVShows:
+                return "/discover/tv?api_key=\(apiKey)&with_keywords=superhero"
+            case .historicalTVShows:
+                return "/discover/tv?api_key=\(apiKey)&with_genres=36"  // History genre
+            case .trueCrimeTVShows:
+                return "/discover/tv?api_key=\(apiKey)&with_genres=99&with_keywords=true-crime"  // Documentary + true crime
+            case .britishTVShows:
+                return "/discover/tv?api_key=\(apiKey)&with_origin_country=GB"  // Great Britain
+            case .telenovelas:
+                return "/discover/tv?api_key=\(apiKey)&with_original_language=es&with_genres=18"  // Spanish + Drama
+            case .animeTVShows:
+                return "/discover/tv?api_key=\(apiKey)&with_genres=16&with_origin_country=JP"  // Animation + Japan
+            case .kidsAndFamilyTVShows:
+                return "/discover/tv?api_key=\(apiKey)&with_genres=10762"  // Kids genre for TV
+
+                // TV endpoints
+                case .sciFiTVShows:
+                    return "/discover/tv?api_key=\(apiKey)&with_genres=10765"   // Sci-Fi & Fantasy for TV
+                case .thrillerTVShows:
+                    return "/discover/tv?api_key=\(apiKey)&with_genres=9648"    // Mystery for TV (close to thriller)
+                case .adventureTVShows:
+                    return "/discover/tv?api_key=\(apiKey)&with_genres=10759"   // Action & Adventure for TV
+                case .mysteryTVShows:
+                    return "/discover/tv?api_key=\(apiKey)&with_genres=9648"    // Mystery for TV
             }
         }
     }
@@ -99,7 +176,7 @@ class TMDBService {
     struct TMDBResponse: Codable {
         let results: [TMDBContent]
     }
-    
+   
     struct TMDBContent: Codable {
         let id: Int
         let title: String?
@@ -109,9 +186,18 @@ class TMDBService {
         let backdropPath: String?
         let releaseDate: String?
         let firstAirDate: String? // For TV shows
-        let voteAverage: Double
-        let genreIds: [Int]
+        let voteAverage: Double?
+        let genreIds: [Int]?
         let mediaType: String?
+        let voteCount: Int? // NEW: For popularity sorting
+        
+        // Build URLs immediately, not lazily
+        let fullPosterURL: String
+        let fullBackdropURL: String
+        
+        var displayVoteAverage: Double {
+            return voteAverage ?? 0.0
+        }
         
         enum CodingKeys: String, CodingKey {
             case id, title, name, overview
@@ -122,25 +208,76 @@ class TMDBService {
             case voteAverage = "vote_average"
             case genreIds = "genre_ids"
             case mediaType = "media_type"
+            case voteCount = "vote_count" // NEW
         }
         
-        // Helper computed properties
+        // Custom initializer to build URLs eagerly
+        init(from decoder: Decoder) throws {
+            let container = try decoder.container(keyedBy: CodingKeys.self)
+            
+            id = try container.decode(Int.self, forKey: .id)
+            title = try container.decodeIfPresent(String.self, forKey: .title)
+            name = try container.decodeIfPresent(String.self, forKey: .name)
+            overview = try container.decodeIfPresent(String.self, forKey: .overview)
+            posterPath = try container.decodeIfPresent(String.self, forKey: .posterPath)
+            backdropPath = try container.decodeIfPresent(String.self, forKey: .backdropPath)
+            releaseDate = try container.decodeIfPresent(String.self, forKey: .releaseDate)
+            firstAirDate = try container.decodeIfPresent(String.self, forKey: .firstAirDate)
+            voteAverage = try container.decodeIfPresent(Double.self, forKey: .voteAverage)
+            genreIds = try container.decodeIfPresent([Int].self, forKey: .genreIds) // FIXED: Optional
+            mediaType = try container.decodeIfPresent(String.self, forKey: .mediaType)
+            voteCount = try container.decodeIfPresent(Int.self, forKey: .voteCount) // NEW
+            
+            // Build URLs immediately
+            if let posterPath = posterPath, !posterPath.isEmpty {
+                fullPosterURL = "https://image.tmdb.org/t/p/w500\(posterPath)"
+            } else {
+                fullPosterURL = ""
+            }
+            
+            if let backdropPath = backdropPath, !backdropPath.isEmpty {
+                fullBackdropURL = "https://image.tmdb.org/t/p/w500\(backdropPath)"
+            } else {
+                fullBackdropURL = ""
+            }
+        }
+        
+        // Manual initializer for when we create TMDBContent manually
+        init(id: Int, title: String?, name: String?, overview: String?, posterPath: String?, backdropPath: String?, releaseDate: String?, firstAirDate: String?, voteAverage: Double?, genreIds: [Int]?, mediaType: String?, voteCount: Int? = nil) {
+            self.id = id
+            self.title = title
+            self.name = name
+            self.overview = overview
+            self.posterPath = posterPath
+            self.backdropPath = backdropPath
+            self.releaseDate = releaseDate
+            self.firstAirDate = firstAirDate
+            self.voteAverage = voteAverage
+            self.genreIds = genreIds
+            self.mediaType = mediaType
+            self.voteCount = voteCount // NEW
+            
+            // Build URLs immediately
+            if let posterPath = posterPath, !posterPath.isEmpty {
+                fullPosterURL = "https://image.tmdb.org/t/p/w500\(posterPath)"
+            } else {
+                fullPosterURL = ""
+            }
+            
+            if let backdropPath = backdropPath, !backdropPath.isEmpty {
+                fullBackdropURL = "https://image.tmdb.org/t/p/w500\(backdropPath)"
+            } else {
+                fullBackdropURL = ""
+            }
+        }
+        
+        // Helper computed properties remain the same...
         var displayTitle: String {
             return title ?? name ?? "Unknown Title"
         }
         
         var displayDate: String {
             return releaseDate ?? firstAirDate ?? ""
-        }
-        
-        var fullPosterURL: String {
-            guard let posterPath = posterPath else { return "" }
-            return "https://image.tmdb.org/t/p/w500\(posterPath)"
-        }
-        
-        var fullBackdropURL: String {
-            guard let backdropPath = backdropPath else { return "" }
-            return "https://image.tmdb.org/t/p/w500\(backdropPath)"
         }
         
         var isMovie: Bool {
@@ -223,18 +360,11 @@ class TMDBService {
         return try await fetchContent(from: .kdramas)
     }
     
-    // MARK: - Backward Compatibility (keeping your existing methods)
-    func fetchPopular() async throws -> [TMDBContent] {
-        return try await fetchPopularMovies() // Defaults to movies for now
-    }
-    
-    func fetchTopRated() async throws -> [TMDBContent] {
-        return try await fetchTopRatedMovies() // Defaults to movies for now
-    }
-    
+    // Add this to your TMDBService fetchByGenre method
     func fetchByGenre(_ genreString: String) async throws -> [TMDBContent] {
         let endpoint: Endpoint
         switch genreString.lowercased() {
+            // Original genres
         case "action":
             endpoint = .actionMovies
         case "comedy":
@@ -245,19 +375,49 @@ class TMDBService {
             endpoint = .romanceMovies
         case "documentary":
             endpoint = .documentaries
-        case "fantasy":           // ADD THIS
+        case "fantasy":
             endpoint = .fantasyMovies
-        case "animation":         // ADD THIS
+        case "animation":
             endpoint = .animationMovies
-        case "drama tv", "tv drama":
+        case "drama":
             endpoint = .dramaTVShows
-        case "comedy tv", "tv comedy":
-            endpoint = .comedyTVShows
-        case "kdrama", "k-drama", "korean drama":
+        case "thriller":
+            endpoint = .thrillerMovies
+        case "adventure":
+            endpoint = .adventureMovies
+        case "mystery":
+            endpoint = .mysteryMovies
+        case "sci-fi":
+            endpoint = .sciFiMovies
+            
+            // FIXED: Crime genre mapping
+        case "crime", "true crime":
+            endpoint = .crimeTV  // This will give you actual crime content
+            
+            // Other genres
+        case "superhero":
+            endpoint = .superheroMovies
+        case "historical":
+            endpoint = .historicalMovies
+        case "bollywood":
+            endpoint = .bollywoodMovies
+        case "anime":
+            endpoint = .animeMovies
+        case "kids & family", "kids and family":
+            endpoint = .kidsAndFamilyMovies
+        case "k-drama", "kdrama":
             endpoint = .kdramas
+        case "british tv":
+            endpoint = .britishTVShows
+        case "telenovelas":
+            endpoint = .telenovelas
+            
         default:
             endpoint = .moviePopular
         }
+        
+        print("🔍 Fetching \(genreString) from URL: \(baseURL + endpoint.path(with: apiKey))")
+        
         return try await fetchContent(from: endpoint)
     }
 }
@@ -492,6 +652,284 @@ extension TMDBService {
             throw TMDBError.decodingError
         }
     }
+    
+    // Add this to TMDBService.swift in the "MARK: - API Methods" section
+    func fetchContentById(_ id: Int, type: String) async throws -> TMDBContent {
+        if type == "movie_watchlist" {
+            return try await fetchMovieById(id)
+        } else {
+            return try await fetchTVShowById(id)
+        }
+    }
+
+
+    private func fetchMovieById(_ id: Int) async throws -> TMDBContent {
+        let urlString = "\(baseURL)/movie/\(id)?api_key=\(apiKey)"
+        
+        guard let url = URL(string: urlString) else {
+            throw TMDBError.invalidURL
+        }
+        
+        var request = URLRequest(url: url)
+        request.setValue("Bearer \(accessToken)", forHTTPHeaderField: "Authorization")
+        request.setValue("application/json", forHTTPHeaderField: "Content-Type")
+        
+        let (data, response) = try await URLSession.shared.data(for: request)
+        
+        guard let httpResponse = response as? HTTPURLResponse,
+              httpResponse.statusCode == 200 else {
+            throw TMDBError.invalidResponse
+        }
+        
+        do {
+            // Decode as a single movie (not an array)
+            let movieData = try JSONDecoder().decode(MovieSingleResponse.self, from: data)
+            return movieData.toTMDBContent()
+        } catch {
+            print("Movie by ID decoding error: \(error)")
+            throw TMDBError.decodingError
+        }
+    }
+
+    private func fetchTVShowById(_ id: Int) async throws -> TMDBContent {
+        let urlString = "\(baseURL)/tv/\(id)?api_key=\(apiKey)"
+        
+        guard let url = URL(string: urlString) else {
+            throw TMDBError.invalidURL
+        }
+        
+        var request = URLRequest(url: url)
+        request.setValue("Bearer \(accessToken)", forHTTPHeaderField: "Authorization")
+        request.setValue("application/json", forHTTPHeaderField: "Content-Type")
+        
+        let (data, response) = try await URLSession.shared.data(for: request)
+        
+        guard let httpResponse = response as? HTTPURLResponse,
+              httpResponse.statusCode == 200 else {
+            throw TMDBError.invalidResponse
+        }
+        
+        do {
+            // Decode as a single TV show (not an array)
+            let tvData = try JSONDecoder().decode(TVShowSingleResponse.self, from: data)
+            return tvData.toTMDBContent()
+        } catch {
+            print("TV show by ID decoding error: \(error)")
+            throw TMDBError.decodingError
+        }
+    }
+}
+
+extension TMDBService {
+    
+    // IMPROVED: Proper actor search using TMDB person API
+    func searchActorSimple(_ actorName: String) async throws -> [TMDBContent] {
+        print("🎭 Searching for actor movies: \(actorName)")
+        
+        // Step 1: Search for the person to get their ID
+        let personId = try await searchPersonId(actorName)
+        
+        if let personId = personId {
+            // Step 2: Get their movie credits using person ID
+            print("✅ Found person ID: \(personId), fetching credits...")
+            return try await fetchPersonMovieCredits(personId)
+        } else {
+            // Fallback: Use improved keyword search
+            print("⚠️ Person not found, using keyword search fallback")
+            return try await searchActorKeywordFallback(actorName)
+        }
+    }
+    
+    // Step 1: Find the person's TMDB ID
+    private func searchPersonId(_ actorName: String) async throws -> Int? {
+        let encodedName = actorName.addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed) ?? ""
+        let urlString = "\(baseURL)/search/person?api_key=\(apiKey)&query=\(encodedName)"
+        
+        guard let url = URL(string: urlString) else {
+            throw TMDBError.invalidURL
+        }
+        
+        var request = URLRequest(url: url)
+        request.setValue("Bearer \(accessToken)", forHTTPHeaderField: "Authorization")
+        request.setValue("application/json", forHTTPHeaderField: "Content-Type")
+        
+        let (data, response) = try await URLSession.shared.data(for: request)
+        
+        guard let httpResponse = response as? HTTPURLResponse,
+              httpResponse.statusCode == 200 else {
+            throw TMDBError.invalidResponse
+        }
+        
+        do {
+            let personResponse = try JSONDecoder().decode(PersonSearchResponse.self, from: data)
+            // Return the most popular person with this name
+            let topResult = personResponse.results
+                .sorted { ($0.popularity ?? 0) > ($1.popularity ?? 0) }
+                .first
+            
+            print("🔍 Person search results: \(personResponse.results.map { $0.name })")
+            return topResult?.id
+        } catch {
+            print("❌ Person search decoding error: \(error)")
+            return nil
+        }
+    }
+    
+    // Step 2: Get actor's movie credits
+    private func fetchPersonMovieCredits(_ personId: Int) async throws -> [TMDBContent] {
+        let urlString = "\(baseURL)/person/\(personId)/movie_credits?api_key=\(apiKey)"
+        
+        guard let url = URL(string: urlString) else {
+            throw TMDBError.invalidURL
+        }
+        
+        var request = URLRequest(url: url)
+        request.setValue("Bearer \(accessToken)", forHTTPHeaderField: "Authorization")
+        request.setValue("application/json", forHTTPHeaderField: "Content-Type")
+        
+        let (data, response) = try await URLSession.shared.data(for: request)
+        
+        guard let httpResponse = response as? HTTPURLResponse,
+              httpResponse.statusCode == 200 else {
+            throw TMDBError.invalidResponse
+        }
+        
+        do {
+            let creditsResponse = try JSONDecoder().decode(PersonCreditsResponse.self, from: data)
+            
+            // Convert credits to TMDBContent and filter for quality
+            let movieCredits = creditsResponse.cast
+                .filter { credit in
+                    // Filter for main roles and good movies
+                    let hasGoodRating = (credit.voteAverage ?? 0) > 5.5
+                    let isMainRole = (credit.order ?? 999) < 10 // Top 10 billing
+                    let hasVotes = (credit.voteCount ?? 0) > 100 // Popular enough
+                    
+                    return hasGoodRating && isMainRole && hasVotes
+                }
+                .sorted { credit1, credit2 in
+                    // Sort by popularity (vote count) and rating
+                    let score1 = (credit1.voteAverage ?? 0) * Double(credit1.voteCount ?? 0)
+                    let score2 = (credit2.voteAverage ?? 0) * Double(credit2.voteCount ?? 0)
+                    return score1 > score2
+                }
+                .prefix(8) // Limit to top 8 movies
+                .map { credit in
+                    // Convert to TMDBContent
+                    TMDBContent(
+                        id: credit.id,
+                        title: credit.title,
+                        name: nil,
+                        overview: credit.overview,
+                        posterPath: credit.posterPath,
+                        backdropPath: credit.backdropPath,
+                        releaseDate: credit.releaseDate,
+                        firstAirDate: nil,
+                        voteAverage: credit.voteAverage,
+                        genreIds: credit.genreIds,
+                        mediaType: "movie",
+                        voteCount: credit.voteCount
+                    )
+                }
+            
+            print("🎬 Found \(movieCredits.count) quality movies for actor")
+            print("🎬 Top movies: \(movieCredits.prefix(3).map { $0.displayTitle })")
+            
+            return Array(movieCredits)
+            
+        } catch {
+            print("❌ Credits decoding error: \(error)")
+            throw TMDBError.decodingError
+        }
+    }
+    
+    // Fallback: Improved keyword search that filters out documentaries
+    private func searchActorKeywordFallback(_ actorName: String) async throws -> [TMDBContent] {
+        // Try multiple search strategies
+        let searchQueries = [
+            "\(actorName) movie",
+            actorName,
+            "\(actorName) film"
+        ]
+        
+        for query in searchQueries {
+            let results = try await search(query)
+            let filtered = results.filter { content in
+                let title = content.displayTitle.lowercased()
+                let overview = content.overview?.lowercased() ?? ""
+                
+                // Filter OUT documentaries and biography content
+                let isDocumentary = title.contains("documentary") ||
+                                  title.contains("biography") ||
+                                  title.contains("behind the scenes") ||
+                                  title.contains("making of") ||
+                                  title.contains("interview") ||
+                                  overview.contains("documentary about") ||
+                                  overview.contains("biography of")
+                
+                // Filter FOR good movies/shows
+                let hasGoodRating = (content.voteAverage ?? 0) > 5.0
+                let isActualMovie = content.isMovie || content.isTVShow
+                
+                return !isDocumentary && hasGoodRating && isActualMovie
+            }
+            .sorted { ($0.voteAverage ?? 0) > ($1.voteAverage ?? 0) }
+            
+            if filtered.count >= 3 {
+                print("✅ Keyword search '\(query)' found \(filtered.count) filtered results")
+                return Array(filtered.prefix(6))
+            }
+        }
+        
+        print("⚠️ All keyword searches failed, returning empty results")
+        return []
+    }
+}
+
+// MARK: - Person Search Response Models
+struct PersonSearchResponse: Codable {
+    let results: [PersonSearchResult]
+}
+
+struct PersonSearchResult: Codable {
+    let id: Int
+    let name: String
+    let popularity: Double?
+    let profilePath: String?
+    
+    enum CodingKeys: String, CodingKey {
+        case id, name, popularity
+        case profilePath = "profile_path"
+    }
+}
+
+struct PersonCreditsResponse: Codable {
+    let cast: [PersonMovieCredit]
+    let crew: [PersonMovieCredit]
+}
+
+struct PersonMovieCredit: Codable {
+    let id: Int
+    let title: String
+    let overview: String?
+    let posterPath: String?
+    let backdropPath: String?
+    let releaseDate: String?
+    let voteAverage: Double?
+    let genreIds: [Int]?
+    let character: String?
+    let order: Int? // Lower order = more important role
+    let voteCount: Int? // Popularity indicator
+    
+    enum CodingKeys: String, CodingKey {
+        case id, title, overview, character, order
+        case posterPath = "poster_path"
+        case backdropPath = "backdrop_path"
+        case releaseDate = "release_date"
+        case voteAverage = "vote_average"
+        case genreIds = "genre_ids"
+        case voteCount = "vote_count"
+    }
 }
 
 struct WatchProvidersResponse: Codable {
@@ -617,3 +1055,77 @@ struct TMDBVideo: Codable {
     let type: String
 }
 
+// Add these after your existing response models
+
+struct MovieSingleResponse: Codable {
+    let id: Int
+    let title: String
+    let overview: String?
+    let posterPath: String?
+    let backdropPath: String?
+    let releaseDate: String?
+    let voteAverage: Double?
+    let genreIds: [Int]?
+    
+    enum CodingKeys: String, CodingKey {
+        case id, title, overview
+        case posterPath = "poster_path"
+        case backdropPath = "backdrop_path"
+        case releaseDate = "release_date"
+        case voteAverage = "vote_average"
+        case genreIds = "genre_ids"
+    }
+    
+    func toTMDBContent() -> TMDBService.TMDBContent {
+        return TMDBService.TMDBContent(
+            id: id,
+            title: title,
+            name: nil,
+            overview: overview,
+            posterPath: posterPath,
+            backdropPath: backdropPath,
+            releaseDate: releaseDate,
+            firstAirDate: nil,
+            voteAverage: voteAverage,
+            genreIds: genreIds ?? [],
+            mediaType: "movie"
+        )
+    }
+}
+
+struct TVShowSingleResponse: Codable {
+    let id: Int
+    let name: String
+    let overview: String?
+    let posterPath: String?
+    let backdropPath: String?
+    let firstAirDate: String?
+    let voteAverage: Double?
+    let genreIds: [Int]?
+    
+    enum CodingKeys: String, CodingKey {
+        case id, name, overview
+        case posterPath = "poster_path"
+        case backdropPath = "backdrop_path"
+        case firstAirDate = "first_air_date"
+        case voteAverage = "vote_average"
+        case genreIds = "genre_ids"
+    }
+    
+    func toTMDBContent() -> TMDBService.TMDBContent {
+        return TMDBService.TMDBContent(
+            id: id,
+            title: nil,
+            name: name,
+            overview: overview,
+            posterPath: posterPath,
+            backdropPath: backdropPath,
+            releaseDate: nil,
+            firstAirDate: firstAirDate,
+            voteAverage: voteAverage,
+            genreIds: genreIds ?? [],
+            mediaType: "tv"
+        )
+    }
+
+}

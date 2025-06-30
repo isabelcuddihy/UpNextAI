@@ -12,8 +12,9 @@ struct GenreSelectionView: View {
     
     private let genres = [
         "Action", "Comedy", "Drama", "Horror", "Romance",
-        "Sci-Fi", "Fantasy", "Animation", "Documentary", "Crime",
-        "Thriller", "Family", "Adventure", "Mystery", "Music"
+        "Sci-Fi", "Fantasy", "Anime", "Documentary", "True Crime",
+        "Thriller", "Kids & Family", "Adventure", "Mystery", "Superhero",
+        "K-Drama", "Bollywood", "British TV", "Telenovelas", "Historical"
     ]
     
     private let columns = [
