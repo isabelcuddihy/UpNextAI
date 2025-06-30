@@ -1,153 +1,139 @@
-//
-//  README.swift
-//  UpNextAI
-//
-//  Created by Isabel Cuddihy on 6/15/25.
-//
+# UpNextAI 🎬
 
-#UpNextAI 🎬
+**Movie Discovery App with AI-Powered Search**
 
-**Intelligent Movie Discovery with AI-Powered Recommendations**
+UpNextAI is an iOS app that helps users discover movies and TV shows through natural language search and personalized recommendations. Built with SwiftUI and integrated with The Movie Database (TMDB) API.
 
-UpNextAI is a privacy-first iOS app that helps users discover their next favorite movie or TV show through intelligent recommendations, streaming availability, and conversational AI assistance.
+## Features
 
-## ✨ Features
+### AI-Powered Search
+- **Natural Language Queries**: Search using phrases like "Korean comedies from the 90s" or "Brad Pitt action movies"
+- **Actor Recognition**: Recognizes 200+ actors and finds their filmographies
+- **Director Search**: Find movies by directors like "Christopher Nolan movies"
+- **Franchise Detection**: Search for content from Marvel, Star Wars, James Bond, and other franchises
+- **Mood-Based Search**: Find content by mood like "something dark" or "feel-good movies"
 
-###Current Features
-- **Real Movie Data**: Integration with TMDB API for trending movies, ratings, and posters
-- **Beautiful UI**: Netflix-inspired interface with smooth scrolling and professional design
-- **User Interactions**: Like/dislike system for learning preferences
-- **Pull-to-Refresh**: Always get the latest trending content
-- **Privacy-First**: No authentication required, all data stays on-device
+### Content Discovery
+- **Personalized Recommendations**: Suggestions based on your selected favorite genres
+- **Real-Time Updates**: Content syncs across all app tabs
+- **Content Details**: View movie/TV show information, cast, crew, and streaming availability
+- **Watchlist Management**: Save content to watch later
 
-###Coming Soon
-- **Netflix-Style Browse**: Grid layout with detailed movie pages
-- **Smart Onboarding**: Quick preference setup for personalized recommendations
-- **Streaming Availability**: See where to watch on Netflix, Disney+, Hulu, and more
-- **Conversational AI**: Natural language movie discovery ("Show me comedies like The Office")
-- **On-Device Learning**: AI that learns your preferences without compromising privacy
+### User Experience
+- **No Account Required**: Start using the app immediately
+- **Local Data Storage**: All preferences stored on your device
+- **Cross-Platform**: Works on iPhone and iPad
 
-## 🚀 Getting Started
+## Technical Implementation
 
-### Prerequisites
+### Architecture
+```
+UpNextAI/
+├── Core/
+│   ├── AI/                    # Natural Language Processing
+│   ├── Data/                  # Core Data + Repository Pattern
+│   ├── Network/               # TMDB API Integration
+│   └── Coordination/          # App Navigation
+├── Features/
+│   ├── Discover/              # Content Feed
+│   ├── Chat/                  # AI Search Interface  
+│   ├── Profile/               # User Preferences
+│   └── ContentDetail/         # Detail Views
+└── Shared/
+    ├── Models/                # Data Models
+    └── UI/                    # Reusable Components
+```
+
+### Key Technologies
+- **SwiftUI**: User interface
+- **Core Data**: Local data persistence
+- **Combine**: Reactive programming for API calls
+- **Natural Language**: Apple's framework for text processing
+- **TMDB API**: Movie and TV show data
+
+### AI Components
+- **Actor Database**: 200+ famous actors across different regions and eras
+- **Movie Database**: 300+ well-known movies and franchises
+- **Director Recognition**: 50+ notable directors
+- **Genre Mapping**: Comprehensive keyword-to-genre associations
+- **Mood Detection**: Sentiment analysis for recommendation filtering
+
+## Getting Started
+
+### Requirements
 - iOS 16.0+
 - Xcode 15.0+
 - Swift 5.9+
 
 ### Installation
-1. Clone the repository
 ```bash
+# Clone the repository
 git clone https://github.com/yourusername/upnextai.git
 cd upnextai
-```
 
-2. Open the project in Xcode
-```bash
+# Open in Xcode
 open UpNextAI.xcodeproj
 ```
 
-3. Build and run on your iOS device or simulator
+### API Setup
+The app includes a development TMDB API key. For your own deployment:
+1. Get an API key from [TMDB](https://www.themoviedb.org/settings/api)
+2. Update the key in `TMDBService.swift`
 
-### API Configuration
-The app uses The Movie Database (TMDB) API for movie data. The API key is already configured for development purposes.
+## Example Queries
 
-For production use, obtain your own API key from [TMDB](https://www.themoviedb.org/settings/api) and update `TMDBService.swift`.
+### Basic Searches
+- "Brad Pitt movies"
+- "Korean dramas"
+- "Christopher Nolan films"
 
-## 🏗️ Architecture
+### Complex Searches
+- "Korean comedies from the 2000s"
+- "Marvel movies but darker"
+- "Something like John Wick but funnier"
 
-UpNextAI follows a clean, feature-based architecture:
+### Mood-Based
+- "Feel-good family movies"
+- "Dark psychological thrillers"
+- "Light popcorn entertainment"
 
-```
-UpNextAI/
-├── App/                    # App lifecycle and configuration
-├── Core/                   # Shared utilities and services
-│   ├── Data/              # Core Data models and persistence
-│   ├── Network/           # API services and networking
-│   └── Extensions/        # Swift extensions
-├── Domain/                # Business logic and entities
-│   ├── Entities/          # Core data models
-│   └── UseCases/          # Business use cases
-└── Features/              # Feature modules
-    ├── ContentFeed/       # Main movie browsing interface
-    ├── ContentDetail/     # Movie detail pages
-    ├── Onboarding/        # User preference setup
-    └── AIChat/            # Conversational AI interface
-```
+## Data & Privacy
 
-## 🎯 Development Roadmap
-
-### Phase 1: Netflix-Style Browse (In Progress)
-- [x] Basic movie feed with TMDB integration
-- [ ] Grid layout conversion
-- [ ] Movie detail pages
-- [ ] Streaming availability integration
-- [ ] Smooth navigation transitions
-
-### Phase 2: Smart Onboarding
-- [ ] Genre preference selection
-- [ ] Favorite actors/directors input
-- [ ] Recent favorites to seed recommendations
-- [ ] Core Data integration for preferences
-
-### Phase 3: AI-Powered Recommendations
-- [ ] On-device machine learning
-- [ ] Preference-based filtering
-- [ ] Conversational AI chatbot
-- [ ] Natural language movie discovery
-
-### Phase 4: Advanced Features
-- [ ] Watchlist management
-- [ ] Social sharing
-- [ ] Review system
-- [ ] Advanced filtering options
-
-## 🛠️ Technical Details
-
-### Key Technologies
-- **SwiftUI**: Modern declarative UI framework
-- **Core Data**: Local data persistence
-- **Combine**: Reactive programming for API calls
-- **TMDB API**: Movie and TV show data
-- **Core ML**: On-device machine learning (planned)
-
-### API Integration
-The app integrates with The Movie Database (TMDB) API for:
-- Trending movies and TV shows
-- Movie details, cast, and crew
-- Poster images and ratings
-- Genre-based filtering
-- Search functionality
-
-### Privacy & Data
 - **No User Accounts**: No registration or login required
-- **On-Device Processing**: All AI learning happens locally
-- **Minimal Data Collection**: Only movie preferences stored locally
-- **GDPR Compliant**: No personal data transmitted to servers
+- **Local Storage**: All user data stays on your device
+- **Minimal Data**: Only stores movie preferences locally
+- **No Tracking**: No analytics or user behavior tracking
 
-## 🤝 Contributing
+## Development
 
-This project is currently in active development. Contributions, ideas, and feedback are welcome!
+### Architecture Patterns
+- **MVVM**: Separation of view logic and business logic
+- **Coordinator Pattern**: Navigation management
+- **Repository Pattern**: Data access abstraction
 
-### Development Setup
-1. Fork the repository
-2. Create a feature branch
-3. Make your changes
-4. Test thoroughly
-5. Submit a pull request
+### Code Organization
+- Feature-based module structure
+- Dependency injection for testability
+- Async/await for network operations
+- Comprehensive error handling
 
-## 📱 Screenshots
+## Contributing
 
-*Screenshots coming soon as features are completed*
+Contributions are welcome. Areas for improvement:
+- Expanding the actor/movie databases
+- Adding support for more languages
+- UI/UX enhancements
+- Performance optimizations
 
-## 📄 License
+## License
 
-This project is licensed under the MIT License - see the LICENSE file for details.
+MIT License - see the [LICENSE](LICENSE) file for details.
 
-## 🙏 Acknowledgments
+## Acknowledgments
 
-- [The Movie Database (TMDB)](https://www.themoviedb.org/) for providing comprehensive movie data
-- The iOS development community for inspiration and best practices
+- [The Movie Database (TMDB)](https://www.themoviedb.org/) for movie data
+- Apple's Natural Language framework for text processing
 
 ---
 
-**UpNextAI** - Discover your next favorite movie with the power of AI 🎬✨
+UpNextAI - Discover movies through intelligent search 🎬
