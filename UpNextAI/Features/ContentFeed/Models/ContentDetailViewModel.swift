@@ -72,7 +72,7 @@ class ContentDetailViewModel: ObservableObject {
     }
 
     // ADD THIS METHOD if you don't have it
-    private func loadWatchProviders(for content: TMDBService.TMDBContent) async {
+    func loadWatchProviders(for content: TMDBService.TMDBContent) async {
         do {
             let contentType = getContentType(for: content)
             watchProviders = try await tmdbService.fetchWatchProviders(for: content.id, contentType: contentType)
@@ -222,7 +222,7 @@ class ContentDetailViewModel: ObservableObject {
     }
     
     // Updated loadSimilarContent method using the helper
-    private func loadSimilarContent(for content: TMDBService.TMDBContent) async {
+    func loadSimilarContent(for content: TMDBService.TMDBContent) async {
         do {
             let contentType = getContentType(for: content)
             similarContent = try await tmdbService.fetchSimilarContent(

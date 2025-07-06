@@ -139,7 +139,8 @@ class NaturalLanguageProcessor {
         "fantasy": ["magical", "fantasy", "wizards", "dragons", "supernatural", "mythical"],
         "crime": ["crime", "detective", "police", "murder", "investigation", "noir"],
         "war": ["war", "military", "battle", "soldiers", "combat", "historical"],
-        
+        "superhero": ["superhero", "super hero", "comic book", "comics", "cape", "hero"],
+           
         // NEW: Mood-based keywords
         "feel good": ["uplifting", "heartwarming", "inspiring", "positive", "cheerful"],
         "dark": ["dark", "gritty", "noir", "bleak", "depressing", "twisted"],

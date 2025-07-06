@@ -360,11 +360,31 @@ class TMDBService {
         return try await fetchContent(from: .kdramas)
     }
     
-    // Add this to your TMDBService fetchByGenre method
+
+
     func fetchByGenre(_ genreString: String) async throws -> [TMDBContent] {
+        print("🎬 Fetching genre: \(genreString)")
+        
         let endpoint: Endpoint
         switch genreString.lowercased() {
-            // Original genres
+            // Handle specific genre combinations FIRST
+        case "romantic comedy", "romantic comedies", "rom com", "rom-com":
+            return try await fetchGenreCombination(["Romance", "Comedy"], contentType: .movie)
+            
+        case "horror comedy", "horror comedies":
+            return try await fetchGenreCombination(["Horror", "Comedy"], contentType: .movie)
+            
+        case "action thriller", "action thrillers":
+            return try await fetchGenreCombination(["Action", "Thriller"], contentType: .movie)
+            
+        case "sci-fi thriller", "scifi thriller":
+            return try await fetchGenreCombination(["Science Fiction", "Thriller"], contentType: .movie)
+            
+            // FIXED: Superhero mapping
+        case "superhero":
+            return try await fetchSuperheroContent()
+            
+            // Original single genres (unchanged)
         case "action":
             endpoint = .actionMovies
         case "comedy":
@@ -387,16 +407,12 @@ class TMDBService {
             endpoint = .adventureMovies
         case "mystery":
             endpoint = .mysteryMovies
-        case "sci-fi":
+        case "sci-fi", "science fiction":
             endpoint = .sciFiMovies
-            
-            // FIXED: Crime genre mapping
         case "crime", "true crime":
-            endpoint = .crimeTV  // This will give you actual crime content
+            endpoint = .crimeTV
             
-            // Other genres
-        case "superhero":
-            endpoint = .superheroMovies
+            // Other existing genres...
         case "historical":
             endpoint = .historicalMovies
         case "bollywood":
@@ -416,10 +432,241 @@ class TMDBService {
             endpoint = .moviePopular
         }
         
-        print("🔍 Fetching \(genreString) from URL: \(baseURL + endpoint.path(with: apiKey))")
-        
         return try await fetchContent(from: endpoint)
     }
+
+    // NEW: Handle multiple genre combinations
+    func fetchGenreCombination(_ genres: [String], contentType: TMDBContentType) async throws -> [TMDBContent] {
+        let genreIds = mapGenresToIds(genres)
+        let genreIdsString = genreIds.map(String.init).joined(separator: ",")
+        
+        let baseURL = contentType == .movie ?
+            "/discover/movie?api_key=\(apiKey)" :
+            "/discover/tv?api_key=\(apiKey)"
+        
+        // Enhanced filtering for better results
+        let ratingThreshold = getGenreRatingThreshold(genres)
+        let minVotes = getGenreMinVotes(genres)
+        
+        // Add additional filters for rom-coms to get mainstream results
+        let additionalFilters = getAdditionalFilters(genres)
+        
+        let urlString = "\(self.baseURL)\(baseURL)&with_genres=\(genreIdsString)&sort_by=popularity.desc&vote_average.gte=\(ratingThreshold)&vote_count.gte=\(minVotes)&with_original_language=en&region=US\(additionalFilters)"
+        
+        print("🔍 Multi-genre URL: \(urlString)")
+        
+        guard let url = URL(string: urlString) else {
+            throw TMDBError.invalidURL
+        }
+        
+        var request = URLRequest(url: url)
+        request.setValue("Bearer \(accessToken)", forHTTPHeaderField: "Authorization")
+        request.setValue("application/json", forHTTPHeaderField: "Content-Type")
+        
+        let (data, response) = try await URLSession.shared.data(for: request)
+        
+        guard let httpResponse = response as? HTTPURLResponse,
+              httpResponse.statusCode == 200 else {
+            throw TMDBError.invalidResponse
+        }
+        
+        do {
+            let tmdbResponse = try JSONDecoder().decode(TMDBResponse.self, from: data)
+            let results = tmdbResponse.results
+            
+            print("✅ Found \(results.count) results for \(genres) combination")
+            print("📍 Top 3: \(results.prefix(3).map { $0.displayTitle })")
+            
+            return results
+        } catch {
+            print("❌ Multi-genre decoding error: \(error)")
+            throw TMDBError.decodingError
+        }
+    }
+
+    // NEW: Map genre names to TMDB IDs
+    private func mapGenresToIds(_ genres: [String]) -> [Int] {
+        let genreMapping: [String: Int] = [
+            "Action": 28,
+            "Adventure": 12,
+            "Animation": 16,
+            "Comedy": 35,
+            "Crime": 80,
+            "Documentary": 99,
+            "Drama": 18,
+            "Family": 10751,
+            "Fantasy": 14,
+            "History": 36,
+            "Horror": 27,
+            "Music": 10402,
+            "Mystery": 9648,
+            "Romance": 10749,
+            "Science Fiction": 878,
+            "TV Movie": 10770,
+            "Thriller": 53,
+            "War": 10752,
+            "Western": 37
+        ]
+        
+        return genres.compactMap { genreMapping[$0] }
+    }
+
+    // FIXED: Superhero content with better filtering
+    private func fetchSuperheroContent() async throws -> [TMDBContent] {
+        // First try: Use action movies with popularity sorting
+        let actionEndpoint = Endpoint.actionMovies
+        let actionResults = try await fetchContent(from: actionEndpoint)
+        
+        let superheroKeywords = [
+            "superhero", "super hero", "marvel", "batman", "superman",
+            "spider-man", "spider man", "wonder woman", "captain america",
+            "iron man", "thor", "hulk", "x-men", "fantastic four",
+            "justice league", "avengers", "dc", "comic book", "mcu"
+        ]
+        
+        // Filter for superhero content, prioritizing popularity
+        let filtered = actionResults
+            .filter { movie in
+                let searchText = "\(movie.displayTitle) \(movie.overview ?? "")".lowercased()
+                return superheroKeywords.contains { keyword in
+                    searchText.contains(keyword)
+                }
+            }
+            .filter { movie in
+                // Lower rating threshold for superhero movies (entertainment > critics)
+                return (movie.voteAverage ?? 0) >= 5.5 && (movie.voteCount ?? 0) >= 150
+            }
+            .sorted { movie1, movie2 in
+                // Sort by popularity score (rating * vote count) - broken down for compiler
+                let rating1 = movie1.voteAverage ?? 0
+                let votes1 = Double(movie1.voteCount ?? 0)
+                let score1 = rating1 * votes1
+                
+                let rating2 = movie2.voteAverage ?? 0
+                let votes2 = Double(movie2.voteCount ?? 0)
+                let score2 = rating2 * votes2
+                
+                return score1 > score2
+            }
+        
+        if filtered.count >= 5 {
+            print("🦸‍♂️ Found \(filtered.count) superhero movies from action filter")
+            print("🦸‍♂️ Top results: \(filtered.prefix(5).map { $0.displayTitle })")
+            return Array(filtered.prefix(15))
+        } else {
+            // Fallback: Direct keyword search
+            print("🦸‍♂️ Action filter insufficient, trying keyword search...")
+            return try await searchSuperheroKeyword()
+        }
+    }
+
+    private func searchSuperheroKeyword() async throws -> [TMDBContent] {
+        // Try multiple specific superhero searches instead of one broad search
+        let queries = [
+            "marvel avengers",
+            "batman superman",
+            "spider-man",
+            "wonder woman"
+        ]
+        
+        var allResults: [TMDBContent] = []
+        
+        for query in queries {
+            let results = try await search(query)
+            let filtered = results.filter { content in
+                let title = content.displayTitle.lowercased()
+                let overview = content.overview?.lowercased() ?? ""
+                
+                // Must be a movie and have superhero keywords
+                let isMovie = content.isMovie
+                let hasSuperheroContent = superheroKeywordCheck(title: title, overview: overview)
+                let hasGoodRating = (content.voteAverage ?? 0) >= 5.0
+                let isEnglish = content.displayTitle.range(of: "[a-zA-Z]", options: .regularExpression) != nil
+                
+                return isMovie && hasSuperheroContent && hasGoodRating && isEnglish
+            }
+            allResults.append(contentsOf: filtered)
+        }
+        
+        // Remove duplicates and sort by popularity
+        let uniqueResults = Array(Set(allResults.map { $0.id }))
+            .compactMap { id in allResults.first { $0.id == id } }
+            .sorted { content1, content2 in
+                let rating1 = content1.voteAverage ?? 0
+                let votes1 = Double(content1.voteCount ?? 0)
+                let score1 = rating1 * votes1
+                
+                let rating2 = content2.voteAverage ?? 0
+                let votes2 = Double(content2.voteCount ?? 0)
+                let score2 = rating2 * votes2
+                
+                return score1 > score2
+            }
+        
+        print("🦸‍♂️ Keyword search found \(uniqueResults.count) superhero movies")
+        print("🦸‍♂️ Results: \(uniqueResults.prefix(5).map { $0.displayTitle })")
+        
+        return Array(uniqueResults.prefix(10))
+    }
+
+    // Genre-specific thresholds based on real-world patterns
+    private func getGenreRatingThreshold(_ genres: [String]) -> Double {
+        // Rom-coms, horror comedies, action movies often get lower critic scores
+        // but high audience engagement - adjust thresholds accordingly
+        
+        if genres.contains("Romance") || genres.contains("Comedy") {
+            return 5.5  // Lower bar for rom-coms and comedies
+        }
+        
+        if genres.contains("Horror") {
+            return 5.8  // Horror gets mixed critical reception
+        }
+        
+        if genres.contains("Action") {
+            return 6.0  // Action movies prioritize entertainment over critics
+        }
+        
+        // Dramas, documentaries, etc. keep higher standards
+        return 6.5
+    }
+
+    private func getGenreMinVotes(_ genres: [String]) -> Int {
+        // Popularity-focused genres need more audience engagement
+        if genres.contains("Romance") || genres.contains("Comedy") || genres.contains("Action") {
+            return 200  // Higher vote count = more mainstream appeal
+        }
+        
+        return 100  // Standard threshold
+    }
+
+    // NEW: Additional filters for specific genre combinations
+    private func getAdditionalFilters(_ genres: [String]) -> String {
+        // For romantic comedies, exclude art house and drama-heavy films
+        if genres.contains("Romance") && genres.contains("Comedy") {
+            return "&without_genres=16,18,99,36" // Exclude Anime, Drama, Documentary, History
+        }
+        
+        return ""
+    }
+
+
+    // Helper function for superhero keyword checking
+    private func superheroKeywordCheck(title: String, overview: String) -> Bool {
+        let superheroKeywords = [
+            "marvel", "batman", "superman", "spider-man", "spider man",
+            "wonder woman", "captain america", "iron man", "thor", "hulk",
+            "avengers", "justice league", "x-men", "fantastic four",
+            "deadpool", "aquaman", "flash", "green lantern", "superhero"
+        ]
+        
+        let searchText = "\(title) \(overview)"
+        return superheroKeywords.contains { keyword in
+            searchText.contains(keyword)
+        }
+    }
+
+
+
 }
     
     // MARK: - Supporting Types
@@ -579,7 +826,7 @@ extension TMDBService {
         }
     }
     
-    func fetchRecommendedContent(for contentId: Int, contentType: TMDBContentType) async throws -> [TMDBContent] {
+    private func fetchRecommendedContent(for contentId: Int, contentType: TMDBContentType) async throws -> [TMDBContent] {
         let endpoint: String
         
         switch contentType {

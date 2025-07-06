@@ -274,16 +274,10 @@ class ChatViewModel: ObservableObject {
         }
     }
     
-    // NEW: Search for romantic comedies (both Romance + Comedy genres)
-    private func searchRomanticComedies(yearRange: ClosedRange<Int>?) async throws -> [TMDBService.TMDBContent] {
-        // Search for romance movies first
-        let romanceResults = try await tmdbService.fetchByGenre("romance")
-        
-        // Filter for movies that also have comedy elements (check genre_ids)
-        let romComResults = romanceResults.filter { movie in
-            // TMDB Comedy genre ID is 35
-            return movie.genreIds?.contains(35) == true
-        }
+
+    func searchRomanticComedies(yearRange: ClosedRange<Int>?) async throws -> [TMDBService.TMDBContent] {
+        // Use our new multi-genre combination method
+        let romComResults = try await tmdbService.fetchGenreCombination(["Romance", "Comedy"], contentType: .movie)
         
         // Apply year filtering if specified
         if let yearRange = yearRange {
