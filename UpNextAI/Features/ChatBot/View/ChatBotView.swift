@@ -124,7 +124,7 @@ struct MovieRecommendationRow: View {
         VStack(alignment: .leading, spacing: 8) {
             ScrollView(.horizontal, showsIndicators: false) {
                 HStack(spacing: 12) {
-                    ForEach(movies.prefix(5)) { movie in
+                    ForEach(movies.prefix(10)) { movie in
                         MovieRecommendationCard(movie: movie)
                     }
                 }

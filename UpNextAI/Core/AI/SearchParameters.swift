@@ -8,18 +8,17 @@
 import Foundation
 
 struct SearchParameters: CustomStringConvertible {
+    
     var genres: [String] = []
     var country: String?
     var yearRange: ClosedRange<Int>?
     var contentType: ContentType?
     var similarToTitle: String?
-    var actorName: String? // NEW: For actor searches
+    var actorName: String?
     var keywords: [String] = []
-    
-    // NEW: Added missing properties for enhanced functionality
-    var directorName: String?      // For director searches
-    var franchiseName: String?     // For franchise searches (Marvel, Star Wars, etc.)
-    var mood: String?              // For mood-based searches (dark, feel-good, etc.)
+    var directorName: String?
+    var franchiseName: String?
+    var mood: String?
     
     // MARK: - Debug Description
     var description: String {
@@ -59,56 +58,79 @@ struct SearchParameters: CustomStringConvertible {
         return parts.joined(separator: ", ")
     }
     
-    // MARK: - TMDB Integration Methods
-    
-    /// Maps AI analysis to your existing TMDB service endpoints
-    func suggestedTMDBEndpoint() -> String? {
-        // Prioritize country-specific endpoints (matches your existing specialty endpoints)
-        if let country = country {
-            switch country {
-            case "KR":
-                return "kdramas"
-            case "GB":
-                return "britishTVShows"
-            case "IN":
-                return "bollywoodMovies"
-            case "ES":
-                return "telenovelas"
+    // MARK: - ✅ UPDATED: Maps to new coordinator-based architecture
+    func suggestedSearchMethod() -> String? {
+        // Handle mood-to-genre conversion
+        var effectiveGenres = genres
+        if let mood = mood, effectiveGenres.isEmpty {
+            switch mood {
+            case "feel-good", "light":
+                effectiveGenres = ["Comedy"]
+            case "dark":
+                effectiveGenres = ["Crime", "Thriller"]
+            case "intense":
+                effectiveGenres = ["Action", "Thriller"]
+            case "emotional":
+                effectiveGenres = ["Drama"]
+            case "smart":
+                effectiveGenres = ["Drama", "Thriller"]
             default:
                 break
             }
         }
         
-        // Use genre-specific endpoints (works with your existing fetchByGenre method)
-        if let primaryGenre = genres.first {
-            return primaryGenre.lowercased() // Maps to your TMDBService.fetchByGenre()
+        // ✅ UPDATED: Return specific method names for coordinator
+        if let country = country {
+            switch country {
+            case "KR", "korean":
+                return "fetchKDramas"
+            case "GB", "british":
+                return "fetchBritishTVShows"
+            case "IN", "indian":
+                return "fetchBollywoodMovies"
+            case "ES", "spanish":
+                return "fetchTelenovelas"
+            default:
+                break
+            }
         }
         
-        return nil // Use general search with keywords
+        return nil
     }
     
-    /// Creates search query string for your existing TMDB search method
     func toSearchQuery() -> String {
         var queryParts: [String] = []
         
-        // Prioritize actor searches
+        // Prioritize specific searches
         if let actor = actorName {
             queryParts.append(actor)
+            return queryParts.joined(separator: " ")
         }
         
-        // Prioritize director searches
         if let director = directorName {
             queryParts.append(director)
+            return queryParts.joined(separator: " ")
         }
         
-        // Prioritize franchise searches
         if let franchise = franchiseName {
             queryParts.append(franchise)
+            return queryParts.joined(separator: " ")
         }
         
-        // Prioritize similar title searches
         if let title = similarToTitle {
             queryParts.append(title)
+            return queryParts.joined(separator: " ")
+        }
+        
+        // Handle year + genre combinations
+        if let yearRange = yearRange, !genres.isEmpty {
+            let yearString = yearRange.lowerBound == yearRange.upperBound ?
+                "\(yearRange.lowerBound)" : "\(yearRange.lowerBound)s"
+            
+            queryParts.append(yearString)
+            queryParts.append(contentsOf: genres.map { $0.lowercased() })
+            
+            return queryParts.joined(separator: " ")
         }
         
         // Add genre context
@@ -120,43 +142,44 @@ struct SearchParameters: CustomStringConvertible {
         return queryParts.joined(separator: " ").trimmingCharacters(in: .whitespacesAndNewlines)
     }
     
-    /// Determines the best search strategy for your existing TMDB integration
+    // ✅ UPDATED: Enhanced search strategy for new architecture
     var searchStrategy: SearchStrategy {
-        // NEW: If we have an actor, use actor search
         if actorName != nil {
             return .actorSearch
         }
         
-        // NEW: If we have a director, use keyword search (since no specific director endpoint)
         if directorName != nil {
             return .keywordSearch
         }
         
-        // NEW: If we have a franchise, use keyword search
         if franchiseName != nil {
             return .keywordSearch
         }
         
-        // If we have a specific title reference, use search
-        if similarToTitle != nil {
+        if let title = similarToTitle, !title.isEmpty {
             return .titleSearch
         }
         
-        // If we have country or genre specifics, use endpoint
+        // ✅ NEW: Enhanced content type awareness
+        if yearRange != nil && !genres.isEmpty {
+            return .endpointSearch
+        }
+        
+        if mood != nil && genres.isEmpty {
+            return .endpointSearch
+        }
+        
         if country != nil || !genres.isEmpty {
             return .endpointSearch
         }
         
-        // Fall back to keyword search
         if !keywords.isEmpty {
             return .keywordSearch
         }
         
-        // Default to trending/popular
         return .fallback
     }
     
-    /// Validates that we have enough information to perform a meaningful search
     var isValidForSearch: Bool {
         return !genres.isEmpty ||
                country != nil ||
@@ -164,30 +187,50 @@ struct SearchParameters: CustomStringConvertible {
                actorName != nil ||
                directorName != nil ||
                franchiseName != nil ||
-               !keywords.isEmpty
+               !keywords.isEmpty ||
+               mood != nil
     }
     
-    /// Returns user-friendly description of what we're searching for
+    // ✅ UPDATED: Better search descriptions with content type awareness
     var searchDescription: String {
         var parts: [String] = []
         
         if let actor = actorName {
-            parts.append("movies with \(actor)")
+            let typeDescription = contentType == .tvShow ? "TV shows" :
+                                 contentType == .movie ? "movies" : "content"
+            parts.append("\(typeDescription) with \(actor)")
         }
         
         if let director = directorName {
-            parts.append("movies by \(director)")
+            let typeDescription = contentType == .tvShow ? "TV shows" :
+                                 contentType == .movie ? "movies" : "content"
+            parts.append("\(typeDescription) by \(director)")
         }
         
         if let franchise = franchiseName {
-            parts.append("\(franchise) movies")
+            let typeDescription = contentType == .tvShow ? "TV shows" :
+                                 contentType == .movie ? "movies" : "content"
+            parts.append("\(franchise) \(typeDescription)")
         }
         
         if let title = similarToTitle {
             parts.append("content similar to \(title)")
         }
         
-        if !genres.isEmpty {
+        if let yearRange = yearRange {
+            let yearStr = yearRange.lowerBound == yearRange.upperBound ?
+                "\(yearRange.lowerBound)" : "\(yearRange.lowerBound)s"
+            
+            if !genres.isEmpty {
+                if genres.count == 2 && genres.contains("Romance") && genres.contains("Comedy") {
+                    parts.append("\(yearStr) romantic comedies")
+                } else {
+                    parts.append("\(yearStr) \(genres.joined(separator: ", ").lowercased()) content")
+                }
+            } else {
+                parts.append("content from the \(yearStr)")
+            }
+        } else if !genres.isEmpty {
             if genres.count == 2 && genres.contains("Romance") && genres.contains("Comedy") {
                 parts.append("romantic comedies")
             } else {
@@ -204,15 +247,12 @@ struct SearchParameters: CustomStringConvertible {
             parts.append("from \(countryName)")
         }
         
+        // ✅ NEW: Add content type to description
         if let contentType = contentType {
-            parts.append("(\(contentType.rawValue)s)")
-        }
-        
-        if let yearRange = yearRange {
-            if yearRange.lowerBound == yearRange.upperBound {
-                parts.append("from \(yearRange.lowerBound)")
+            if parts.isEmpty {
+                parts.append("\(contentType.rawValue)s")
             } else {
-                parts.append("from \(yearRange.lowerBound)-\(yearRange.upperBound)")
+                parts.append("(\(contentType.rawValue)s only)")
             }
         }
         
@@ -224,7 +264,6 @@ struct SearchParameters: CustomStringConvertible {
     }
     
     // MARK: - Helper Methods
-    
     private func countryDisplayName(for countryCode: String) -> String {
         switch countryCode {
         case "KR": return "Korea"
@@ -235,15 +274,45 @@ struct SearchParameters: CustomStringConvertible {
         default: return countryCode
         }
     }
-}
+        
+        // MARK: - TMDB Integration Methods
+        
+        /// Maps AI analysis to your existing TMDB service endpoints
+        func suggestedTMDBEndpoint() -> String? {
+            // Prioritize country-specific endpoints (matches your existing specialty endpoints)
+            if let country = country {
+                switch country {
+                case "KR":
+                    return "kdramas"
+                case "GB":
+                    return "britishTVShows"
+                case "IN":
+                    return "bollywoodMovies"
+                case "ES":
+                    return "telenovelas"
+                default:
+                    break
+                }
+            }
+            
+            // Use genre-specific endpoints (works with your existing fetchByGenre method)
+            if let primaryGenre = genres.first {
+                return primaryGenre.lowercased() // Maps to your TMDBService.fetchByGenre()
+            }
+            
+            return nil // Use general search with keywords
+        }
+
+    }
+
 
 // MARK: - Search Strategy Enum
 enum SearchStrategy {
-    case actorSearch      // NEW: Search by actor name
-    case titleSearch      // Use TMDB search with title
-    case endpointSearch   // Use specific TMDB endpoint (genre/country)
-    case keywordSearch    // Use TMDB search with keywords
-    case fallback         // Use trending/popular content
+    case actorSearch
+    case titleSearch
+    case endpointSearch
+    case keywordSearch
+    case fallback
     
     var description: String {
         switch self {

@@ -127,7 +127,7 @@ class NaturalLanguageProcessor {
         "alien", "predator", "rocky", "rambo", "indiana jones"
     ]
     
-    // IMPROVED: Enhanced Genre Keywords with Mood/Style
+    // ✅ ENHANCED: Genre Keywords with Mood/Style (including superhero fix)
     private let genreKeywords: [String: [String]] = [
         "action": ["action", "explosive", "fight", "intense", "thrilling", "adrenaline", "guns", "chase"],
         "comedy": ["funny", "hilarious", "laugh", "humor", "comedy", "witty", "silly", "goofy"],
@@ -139,7 +139,7 @@ class NaturalLanguageProcessor {
         "fantasy": ["magical", "fantasy", "wizards", "dragons", "supernatural", "mythical"],
         "crime": ["crime", "detective", "police", "murder", "investigation", "noir"],
         "war": ["war", "military", "battle", "soldiers", "combat", "historical"],
-        "superhero": ["superhero", "super hero", "comic book", "comics", "cape", "hero"],
+        "superhero": ["superhero", "super hero", "comic book", "comics", "cape", "hero"], // ✅ FIXED: Added superhero
            
         // NEW: Mood-based keywords
         "feel good": ["uplifting", "heartwarming", "inspiring", "positive", "cheerful"],
@@ -166,88 +166,66 @@ class NaturalLanguageProcessor {
         // Spanish content
         "spanish": "ES", "spain": "ES", "telenovela": "ES", "telenovelas": "ES"
     ]
-    
-   
-  
-    func parseMovieQuery(_ query: String) -> SearchParameters {
-        print("🧠 AI Processing query: '\(query)'")
+
+    // ✅ NEW: Helper function to check if query explicitly asks for similarity
+    private func isExplicitSimilarityRequest(_ query: String) -> Bool {
+        let similarityPatterns = [
+            "like ", "similar to ", "movies like ", "shows like ",
+            "something like ", "reminds me of ", "in the style of "
+        ]
         
-        let lowercaseQuery = query.lowercased()
-        var searchParams = SearchParameters()
+        return similarityPatterns.contains { pattern in
+            query.contains(pattern)
+        }
+    }
+
+    // ✅ NEW: Helper to prevent mood words from being detected as actors
+    private func isMoodWord(_ word: String) -> Bool {
+        let moodWords = [
+            "happy", "sad", "funny", "scary", "romantic", "dark",
+            "light", "intense", "emotional", "smart", "clever"
+        ]
+        return moodWords.contains(word.lowercased())
+    }
+
+    // ✅ ENHANCED: Better mood detection with more patterns
+    private func detectMood(from query: String) -> String? {
+        let moodPatterns: [String: [String]] = [
+            "feel-good": [
+                "feel good", "uplifting", "heartwarming", "inspiring",
+                "positive", "cheerful", "happy", "joyful", "lighthearted"
+            ],
+            "dark": [
+                "dark", "gritty", "noir", "bleak", "depressing",
+                "twisted", "serious", "heavy", "disturbing"
+            ],
+            "light": [
+                "light", "easy", "fun", "casual", "simple",
+                "mindless", "popcorn", "entertaining"
+            ],
+            "intense": [
+                "intense", "gripping", "edge of your seat",
+                "nail biting", "thrilling", "suspenseful"
+            ],
+            "emotional": [
+                "emotional", "tear jerker", "touching", "moving",
+                "heartbreaking", "dramatic", "sad"
+            ],
+            "smart": [
+                "intelligent", "smart", "clever", "thought provoking",
+                "cerebral", "complex", "sophisticated"
+            ]
+        ]
         
-        // Initialize Apple's NaturalLanguage tagger
-        let tagger = NLTagger(tagSchemes: [.nameType, .lexicalClass])
-        tagger.string = query
-        
-        // 1. NEW: Check for directors FIRST (very specific intent)
-        if let director = detectDirector(from: lowercaseQuery) {
-            searchParams.directorName = director
-            // Remove these lines - searchStrategy is computed automatically
-            // searchParams.searchStrategy = .keywordSearch
-            print("🎬 Detected director: '\(director)'")
-            // Remove this line - searchDescription is computed automatically
-            // searchParams.searchDescription = "movies by \(director.capitalized)"
-            return searchParams // Return early for director searches
+        for (mood, keywords) in moodPatterns {
+            for keyword in keywords {
+                if query.contains(keyword) {
+                    return mood
+                }
+            }
         }
         
-        // 2. NEW: Check for franchises (Marvel, Star Wars, etc.)
-        if let franchise = detectFranchise(from: lowercaseQuery) {
-            searchParams.franchiseName = franchise
-            // Remove these lines - computed automatically
-            // searchParams.searchStrategy = .keywordSearch
-            print("🏰 Detected franchise: '\(franchise)'")
-            // Remove this line - computed automatically
-            // searchParams.searchDescription = "\(franchise.capitalized) movies"
-            return searchParams // Return early for franchise searches
-        }
-        
-        // 3. ENHANCED: Check for famous actors (expanded database)
-        if let actor = detectActor(from: lowercaseQuery) {
-            searchParams.actorName = actor
-            print("🎭 Detected actor: '\(actor)'")
-        }
-        
-        // 4. ENHANCED: Check for famous movie titles (expanded database)
-        else if let movie = detectFamousMovie(from: lowercaseQuery) {
-            searchParams.similarToTitle = movie
-            print("🎬 Detected famous movie: '\(movie)'")
-        }
-        
-        // 5. Check for "like [Title]" patterns (existing logic)
-        else {
-            searchParams.similarToTitle = extractSimilarTitle(from: query, using: tagger)
-        }
-        
-        // 6. NEW: Enhanced mood detection
-        if let mood = detectMood(from: lowercaseQuery) {
-            searchParams.mood = mood
-            print("😊 Detected mood: '\(mood)'")
-        }
-        
-        // 7. Detect what type of content they want (existing)
-        searchParams.contentType = detectContentType(from: lowercaseQuery)
-        
-        // 8. ENHANCED: Extract genres with better keyword mapping
-        searchParams.genres = extractGenres(from: lowercaseQuery, using: tagger)
-        
-        // 9. SPECIAL: Handle romantic comedy requests (existing)
-        if isRomanticComedyRequest(lowercaseQuery) {
-            searchParams.genres = ["Romance", "Comedy"]
-            print("💕 Detected romantic comedy request")
-        }
-        
-        // 10. ENHANCED: Detect country/region with expanded list
-        searchParams.country = extractCountry(from: lowercaseQuery)
-        
-        // 11. Look for time period references (existing)
-        searchParams.yearRange = extractYearRange(from: lowercaseQuery)
-        
-        // 12. Extract general keywords for fallback searching (existing)
-        searchParams.keywords = extractKeywords(from: lowercaseQuery, using: tagger)
-        
-        print("🎯 AI Extracted: \(searchParams)")
-        
-        return searchParams
+        return nil
     }
 
     // NEW: Director detection function
@@ -301,29 +279,6 @@ class NaturalLanguageProcessor {
                     if query.contains(franchise) {
                         return franchise
                     }
-                }
-            }
-        }
-        
-        return nil
-    }
-
-    // NEW: Mood detection function
-    private func detectMood(from query: String) -> String? {
-        // Define mood patterns
-        let moodPatterns: [String: [String]] = [
-            "feel-good": ["feel good", "uplifting", "heartwarming", "inspiring", "positive", "cheerful", "happy"],
-            "dark": ["dark", "gritty", "noir", "bleak", "depressing", "twisted", "serious", "heavy"],
-            "light": ["light", "easy", "fun", "casual", "simple", "mindless", "popcorn"],
-            "intense": ["intense", "gripping", "edge of your seat", "nail biting", "thrilling"],
-            "emotional": ["emotional", "tear jerker", "touching", "moving", "heartbreaking"],
-            "smart": ["intelligent", "smart", "clever", "thought provoking", "cerebral", "complex"]
-        ]
-        
-        for (mood, keywords) in moodPatterns {
-            for keyword in keywords {
-                if query.contains(keyword) {
-                    return mood
                 }
             }
         }
@@ -392,22 +347,62 @@ class NaturalLanguageProcessor {
         return nil
     }
 
-    // ENHANCED: Genre extraction with better keyword mapping
+    // ✅ ENHANCED: Better genre extraction with mood mapping
     private func extractGenres(from query: String, using tagger: NLTagger) -> [String] {
         var detectedGenres: [String] = []
         
-        // Use your enhanced genreKeywords dictionary
-        for (genre, keywords) in genreKeywords {
+        // Enhanced genre keywords with mood mapping
+        let enhancedGenreKeywords: [String: [String]] = [
+            "Comedy": [
+                "comedy", "comedies", "funny", "hilarious", "laugh",
+                "humor", "witty", "silly", "goofy", "happy"
+            ],
+            "Action": [
+                "action", "explosive", "fight", "intense", "thrilling",
+                "adrenaline", "guns", "chase"
+            ],
+            "Romance": [
+                "romantic", "romance", "love", "dating", "sweet",
+                "relationship", "couples", "wedding"
+            ],
+            "Horror": [
+                "scary", "terrifying", "horror", "frightening",
+                "spooky", "creepy", "ghost", "zombie"
+            ],
+            "Drama": [
+                "dramatic", "emotional", "deep", "serious",
+                "touching", "moving", "powerful"
+            ],
+            "Thriller": [
+                "suspense", "tension", "mystery", "psychological",
+                "edge of your seat", "thriller"
+            ],
+            "Science Fiction": [
+                "science fiction", "sci-fi", "scifi", "futuristic",
+                "space", "aliens", "robots", "cyberpunk"
+            ],
+            "Fantasy": [
+                "magical", "fantasy", "wizards", "dragons",
+                "supernatural", "mythical"
+            ],
+            "Crime": [
+                "crime", "detective", "police", "murder",
+                "investigation", "noir"
+            ]
+        ]
+        
+        for (genre, keywords) in enhancedGenreKeywords {
             for keyword in keywords {
                 if query.contains(keyword) {
-                    detectedGenres.append(genre.capitalized)
-                    break // Don't add the same genre multiple times
+                    if !detectedGenres.contains(genre) {
+                        detectedGenres.append(genre)
+                    }
+                    break
                 }
             }
         }
         
-        // Remove duplicates and return
-        return Array(Set(detectedGenres))
+        return detectedGenres
     }
 
     // ENHANCED: Country detection with expanded list
@@ -452,20 +447,6 @@ class NaturalLanguageProcessor {
         return false
     }
     
-    // MARK: - Content Type Detection
-    private func detectContentType(from query: String) -> ContentType? {
-        if query.contains("movie") || query.contains("film") || query.contains("cinema") {
-            return .movie
-        }
-        
-        if query.contains("show") || query.contains("series") || query.contains("tv") ||
-           query.contains("episode") || query.contains("season") {
-            return .tvShow
-        }
-        
-        return nil // Mixed results - let TMDB decide
-    }
-    
     
     // MARK: - Mood-Based Genre Detection (Apple AI)
     private func detectMoodBasedGenres(from query: String, using tagger: NLTagger) -> Set<String> {
@@ -496,79 +477,66 @@ class NaturalLanguageProcessor {
     }
 
     
-    // MARK: - Time Period Detection
+    // ✅ ENHANCED: Better year detection for 80s/90s queries
     private func extractYearRange(from query: String) -> ClosedRange<Int>? {
-        // More comprehensive decade detection patterns
-        let decade80s = ["80s", "1980s", "eighties", "'80s"]
-        let decade90s = ["90s", "1990s", "nineties", "'90s", "90's"]
-        let decade2000s = ["2000s", "early 2000s", "00s", "'00s"]
-        let decade2010s = ["2010s", "twenty tens", "10s", "'10s", "2010's"]
-        let decade2020s = ["2020s", "recent", "new", "20s", "'20s"]
+        print("📅 Checking year patterns in: '\(query)'")
         
-        for pattern in decade80s {
-            if query.contains(pattern) {
-                print("📅 Found decade: 1980s")
-                return 1980...1989
-            }
-        }
-        
-        for pattern in decade90s {
-            if query.contains(pattern) {
-                print("📅 Found decade: 1990s")
-                return 1990...1999
-            }
-        }
-        
-        for pattern in decade2000s {
-            if query.contains(pattern) {
-                print("📅 Found decade: 2000s")
-                return 2000...2009
-            }
-        }
-        
-        for pattern in decade2010s {
-            if query.contains(pattern) {
-                print("📅 Found decade: 2010s")
-                return 2010...2019
-            }
-        }
-        
-        for pattern in decade2020s {
-            if query.contains(pattern) {
-                print("📅 Found decade: 2020s")
-                return 2020...2024
-            }
-        }
-        
-        // Better relative time detection
-        if query.contains("classic") || query.contains("old") || query.contains("vintage") {
-            print("📅 Found classic period")
-            return 1970...1999
-        }
-        if query.contains("modern") || query.contains("contemporary") {
-            print("📅 Found modern period")
-            return 2010...2024
-        }
-        
-        // Specific year detection using regex - more comprehensive
-        let yearPatterns = [
-            "\\b(19[6-9]\\d)\\b",  // 1960-1999
-            "\\b(20[0-2]\\d)\\b"   // 2000-2029
+        // ✅ ENHANCED: More comprehensive decade detection
+        let decadePatterns: [(patterns: [String], range: ClosedRange<Int>)] = [
+            (["80s", "1980s", "eighties", "'80s", "80's"], 1980...1989),
+            (["90s", "1990s", "nineties", "'90s", "90's"], 1990...1999),
+            (["2000s", "early 2000s", "00s", "'00s", "2000's"], 2000...2009),
+            (["2010s", "twenty tens", "10s", "'10s", "2010's"], 2010...2019),
+            (["2020s", "recent", "new", "20s", "'20s", "2020's"], 2020...2024)
         ]
         
-        for pattern in yearPatterns {
-            let yearRegex = try? NSRegularExpression(pattern: pattern)
-            let range = NSRange(location: 0, length: query.utf16.count)
-            
-            if let match = yearRegex?.firstMatch(in: query, range: range) {
-                let yearString = (query as NSString).substring(with: match.range)
-                if let year = Int(yearString) {
-                    print("📅 Found specific year: \(year)")
-                    return year...year
+        for (patterns, range) in decadePatterns {
+            for pattern in patterns {
+                if query.contains(pattern) {
+                    print("📅 Found decade pattern '\(pattern)': \(range)")
+                    return range
                 }
             }
         }
         
+        // ✅ ENHANCED: Better relative time detection
+        let relativePatterns: [(patterns: [String], range: ClosedRange<Int>)] = [
+            (["classic", "classics", "old", "vintage", "retro"], 1970...1999),
+            (["modern", "contemporary", "current"], 2010...2024),
+            (["golden age", "golden era"], 1930...1960),
+            (["new wave", "80s new wave"], 1980...1989)
+        ]
+        
+        for (patterns, range) in relativePatterns {
+            for pattern in patterns {
+                if query.contains(pattern) {
+                    print("📅 Found relative time '\(pattern)': \(range)")
+                    return range
+                }
+            }
+        }
+        
+        // ✅ ENHANCED: Specific year detection with better regex
+        let yearPatterns = [
+            "\\b(19[5-9]\\d)\\b",  // 1950-1999
+            "\\b(20[0-2]\\d)\\b"   // 2000-2029
+        ]
+        
+        for pattern in yearPatterns {
+            if let yearRegex = try? NSRegularExpression(pattern: pattern) {
+                let range = NSRange(location: 0, length: query.utf16.count)
+                
+                if let match = yearRegex.firstMatch(in: query, range: range) {
+                    let yearString = (query as NSString).substring(with: match.range)
+                    if let year = Int(yearString) {
+                        print("📅 Found specific year: \(year)")
+                        return year...year
+                    }
+                }
+            }
+        }
+        
+        print("📅 No year patterns found")
         return nil
     }
     
@@ -645,4 +613,284 @@ class NaturalLanguageProcessor {
         ]
         return commonWords.contains(word)
     }
+    
+    // ✅ ENHANCED: Add these methods to NaturalLanguageProcessor.swift for better TV show detection
+
+    // MARK: - Enhanced Content Type Detection
+    private func detectContentType(from query: String) -> ContentType? {
+        let lowercaseQuery = query.lowercased()
+        
+        // ✅ ENHANCED: More comprehensive TV show detection
+        let tvIndicators = [
+            // Direct mentions
+            "tv show", "tv shows", "television show", "television shows",
+            "show", "shows", "series", "tv series", "television series",
+            "episode", "episodes", "season", "seasons",
+            
+            // TV-specific terminology
+            "sitcom", "sitcoms", "drama series", "comedy series",
+            "miniseries", "mini series", "limited series",
+            "binge watch", "binge watching", "streaming series",
+            
+            // Regional TV terms
+            "british tv", "british shows", "uk shows", "bbc shows",
+            "k-drama", "kdrama", "korean drama", "korean shows",
+            "telenovela", "telenovelas", "soap opera",
+            "anime series", "anime shows", "tv anime",
+            
+            // Platform-specific terms
+            "netflix series", "hbo series", "disney+ series",
+            "streaming show", "web series"
+        ]
+        
+        let movieIndicators = [
+            // Direct mentions
+            "movie", "movies", "film", "films", "cinema",
+            "flick", "flicks", "picture", "pictures",
+            
+            // Movie-specific terminology
+            "blockbuster", "blockbusters", "box office",
+            "theatrical release", "big screen",
+            "hollywood movie", "bollywood movie",
+            "indie film", "independent film",
+            
+            // Movie genres that are rarely TV
+            "superhero movie", "action movie", "horror movie",
+            "romantic comedy movie", "animated movie"
+        ]
+        
+        // Check for TV indicators first (more specific)
+        for indicator in tvIndicators {
+            if lowercaseQuery.contains(indicator) {
+                print("📺 Detected TV content from: '\(indicator)'")
+                return .tvShow
+            }
+        }
+        
+        // Then check for movie indicators
+        for indicator in movieIndicators {
+            if lowercaseQuery.contains(indicator) {
+                print("🎬 Detected movie content from: '\(indicator)'")
+                return .movie
+            }
+        }
+        
+        // ✅ NEW: Context-based detection
+        return detectContentTypeFromContext(lowercaseQuery)
+    }
+
+    // ✅ NEW: Context-based content type detection
+    private func detectContentTypeFromContext(_ query: String) -> ContentType? {
+        // Patterns that suggest TV shows
+        let tvPatterns = [
+            // Question patterns that are typically about TV
+            "what should i watch", "what to watch", "something to binge",
+            "good to binge", "binge worthy", "worth binging",
+            
+            // Duration/commitment patterns
+            "long series", "short series", "quick watch",
+            "many seasons", "few seasons", "one season",
+            
+            // Viewing context patterns
+            "background watching", "while working", "easy to follow",
+            "don't need to pay attention",
+            
+            // Character development patterns (more common in TV)
+            "character development", "character arcs", "complex characters",
+            "ensemble cast"
+        ]
+        
+        // Patterns that suggest movies
+        let moviePatterns = [
+            // Time commitment patterns
+            "quick movie", "short movie", "long movie",
+            "2 hour", "90 minute", "under 2 hours",
+            
+            // Viewing context patterns
+            "date night", "movie night", "theater",
+            "big screen", "cinema experience",
+            
+            // Award patterns (more common for movies)
+            "oscar winner", "academy award", "golden globe",
+            "cannes", "sundance"
+        ]
+        
+        for pattern in tvPatterns {
+            if query.contains(pattern) {
+                print("📺 Detected TV from context: '\(pattern)'")
+                return .tvShow
+            }
+        }
+        
+        for pattern in moviePatterns {
+            if query.contains(pattern) {
+                print("🎬 Detected movie from context: '\(pattern)'")
+                return .movie
+            }
+        }
+        
+        return nil // Mixed/unknown
+    }
+
+    // ✅ ENHANCED: Updated parseMovieQuery method with better TV detection
+    func parseMovieQuery(_ query: String) -> SearchParameters {
+        print("🧠 AI Processing query: '\(query)'")
+        
+        let lowercaseQuery = query.lowercased()
+        var searchParams = SearchParameters()
+        
+        // Initialize Apple's NaturalLanguage tagger
+        let tagger = NLTagger(tagSchemes: [.nameType, .lexicalClass])
+        tagger.string = query
+        
+        // ✅ ENHANCED: Detect content type EARLY in the process
+        searchParams.contentType = detectContentType(from: lowercaseQuery)
+        if let contentType = searchParams.contentType {
+            print("🎭 Detected content type: \(contentType.rawValue)")
+        }
+        
+        // 1. Check for directors FIRST (very specific intent)
+        if let director = detectDirector(from: lowercaseQuery) {
+            searchParams.directorName = director
+            print("🎬 Detected director: '\(director)'")
+            return searchParams
+        }
+        
+        // 2. Check for franchises (Marvel, Star Wars, etc.)
+        if let franchise = detectFranchise(from: lowercaseQuery) {
+            searchParams.franchiseName = franchise
+            print("🏰 Detected franchise: '\(franchise)'")
+            return searchParams
+        }
+        
+        // 3. Extract year range
+        searchParams.yearRange = extractYearRange(from: lowercaseQuery)
+        if let yearRange = searchParams.yearRange {
+            print("📅 Detected year range: \(yearRange)")
+        }
+        
+        // 4. Enhanced mood detection
+        if let mood = detectMood(from: lowercaseQuery) {
+            searchParams.mood = mood
+            print("😊 Detected mood: '\(mood)'")
+        }
+        
+        // 5. Enhanced actor detection
+        if let actor = detectActor(from: lowercaseQuery) {
+            if !isMoodWord(actor) {
+                searchParams.actorName = actor
+                print("🎭 Detected actor: '\(actor)'")
+            }
+        }
+        
+        // 6. Enhanced movie title detection
+        if searchParams.actorName == nil && searchParams.mood == nil {
+            if let movie = detectFamousMovie(from: lowercaseQuery) {
+                if isExplicitSimilarityRequest(lowercaseQuery) {
+                    searchParams.similarToTitle = movie
+                    print("🎬 Detected famous movie: '\(movie)'")
+                }
+            } else {
+                searchParams.similarToTitle = extractSimilarTitle(from: query, using: tagger)
+            }
+        }
+        
+        // 7. ✅ ENHANCED: Genre extraction with content type awareness
+        searchParams.genres = extractGenresWithContentType(from: lowercaseQuery, contentType: searchParams.contentType, using: tagger)
+        
+        // 8. Handle romantic comedy requests
+        if isRomanticComedyRequest(lowercaseQuery) {
+            searchParams.genres = ["Romance", "Comedy"]
+            print("💕 Detected romantic comedy request")
+        }
+        
+        // 9. Detect country/region
+        searchParams.country = extractCountry(from: lowercaseQuery)
+        
+        // 10. Extract keywords for fallback
+        if searchParams.actorName == nil && searchParams.similarToTitle == nil {
+            searchParams.keywords = extractKeywords(from: lowercaseQuery, using: tagger)
+        }
+        
+        print("🎯 AI Extracted: \(searchParams)")
+        
+        return searchParams
+    }
+
+    // ✅ NEW: Content-type-aware genre extraction
+    private func extractGenresWithContentType(from query: String, contentType: ContentType?, using tagger: NLTagger) -> [String] {
+        var detectedGenres: [String] = []
+        
+        // Base genre keywords
+        let baseGenreKeywords: [String: [String]] = [
+            "Comedy": ["comedy", "comedies", "funny", "hilarious", "laugh", "humor", "witty", "silly", "goofy", "happy"],
+            "Action": ["action", "explosive", "fight", "intense", "thrilling", "adrenaline", "guns", "chase"],
+            "Romance": ["romantic", "romance", "love", "dating", "sweet", "relationship", "couples", "wedding"],
+            "Horror": ["scary", "terrifying", "horror", "frightening", "spooky", "creepy", "ghost", "zombie"],
+            "Drama": ["dramatic", "emotional", "deep", "serious", "touching", "moving", "powerful"],
+            "Thriller": ["suspense", "tension", "mystery", "psychological", "edge of your seat", "thriller"],
+            "Science Fiction": ["science fiction", "sci-fi", "scifi", "futuristic", "space", "aliens", "robots", "cyberpunk"],
+            "Fantasy": ["magical", "fantasy", "wizards", "dragons", "supernatural", "mythical"],
+            "Crime": ["crime", "detective", "police", "murder", "investigation", "noir"]
+        ]
+        
+        // ✅ NEW: TV-specific genre variations
+        let tvSpecificKeywords: [String: [String]] = [
+            "Comedy": ["sitcom", "sitcoms", "comedy series", "funny show", "comedy show"],
+            "Drama": ["drama series", "dramatic series", "soap opera", "prestige tv"],
+            "Crime": ["police procedural", "detective series", "crime drama", "true crime series"],
+            "Reality": ["reality tv", "reality show", "competition show", "dating show"],
+            "Documentary": ["docuseries", "documentary series", "docu-series"]
+        ]
+        
+        // ✅ NEW: Movie-specific genre variations
+        let movieSpecificKeywords: [String: [String]] = [
+            "Action": ["action movie", "action film", "blockbuster action"],
+            "Horror": ["horror movie", "horror film", "scary movie"],
+            "Comedy": ["comedy movie", "comedy film", "funny movie"],
+            "Romance": ["romantic movie", "rom-com", "romantic comedy movie"]
+        ]
+        
+        // Check base keywords first
+        for (genre, keywords) in baseGenreKeywords {
+            for keyword in keywords {
+                if query.contains(keyword) {
+                    if !detectedGenres.contains(genre) {
+                        detectedGenres.append(genre)
+                    }
+                    break
+                }
+            }
+        }
+        
+        // ✅ NEW: Add content-type-specific genre detection
+        if contentType == .tvShow {
+            for (genre, keywords) in tvSpecificKeywords {
+                for keyword in keywords {
+                    if query.contains(keyword) {
+                        if !detectedGenres.contains(genre) {
+                            detectedGenres.append(genre)
+                            print("📺 Added TV-specific genre: \(genre)")
+                        }
+                        break
+                    }
+                }
+            }
+        } else if contentType == .movie {
+            for (genre, keywords) in movieSpecificKeywords {
+                for keyword in keywords {
+                    if query.contains(keyword) {
+                        if !detectedGenres.contains(genre) {
+                            detectedGenres.append(genre)
+                            print("🎬 Added movie-specific genre: \(genre)")
+                        }
+                        break
+                    }
+                }
+            }
+        }
+        
+        return detectedGenres
+    }
+
 }

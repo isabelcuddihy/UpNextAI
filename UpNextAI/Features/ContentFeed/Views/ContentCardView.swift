@@ -8,7 +8,7 @@
 import SwiftUI
 
 struct ContentCardView: View {
-    let movie: TMDBService.TMDBContent
+    let movie: TMDBContent
     @State private var isLiked: Bool = false
     @State private var isDisliked: Bool = false
     
@@ -123,7 +123,7 @@ struct ContentCardView: View {
 
 #Preview {
     // Mock data for preview
-    let mockMovie = TMDBService.TMDBContent(
+    let mockMovie = TMDBContent(
         id: 1,
         title: "Sample Movie",
         name: nil,

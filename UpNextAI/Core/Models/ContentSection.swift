@@ -10,7 +10,7 @@ import Foundation
 struct ContentSection: Identifiable {
     let id = UUID()
     let title: String
-    let content: [TMDBService.TMDBContent]
+    let content: [TMDBContent]
     let category: ContentCategory
 }
 

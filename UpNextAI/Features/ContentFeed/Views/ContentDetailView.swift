@@ -12,9 +12,9 @@ struct ContentDetailView: View {
     @EnvironmentObject var tabCommunicationService: TabCommunicationService
     @StateObject private var viewModel = ContentDetailViewModel()
     
-    let content: TMDBService.TMDBContent
+    let content: TMDBContent
     
-    init(content: TMDBService.TMDBContent) {
+    init(content: TMDBContent ) {
         self.content = content
     }
     
@@ -180,7 +180,7 @@ struct ContentDetailView: View {
                         .fontWeight(.semibold)
                     
                     LazyVGrid(columns: Array(repeating: GridItem(.flexible()), count: 3), spacing: 8) {
-                        ForEach(genres.prefix(6), id: \.self) { genre in
+                        ForEach(genres.prefix(10), id: \.self) { genre in
                             Text(genre)
                                 .font(.caption)
                                 .padding(.horizontal, 12)

@@ -20,6 +20,9 @@ class ChatViewModel: ObservableObject {
     private let contentRepository: ContentRepository
     private let communicationService: TabCommunicationService
     private let tmdbService = TMDBService.shared
+    private let apiClient = TMDBAPIClient.shared
+    private let movieService = MovieSearchService()
+    private let tvService = TVShowSearchService()
     
     // NEW: AI Integration
     private let naturalLanguageProcessor = NaturalLanguageProcessor()
@@ -118,7 +121,7 @@ class ChatViewModel: ObservableObject {
         print("🎭 Genres: \(params.genres)")
         
         do {
-            var tmdbResults: [TMDBService.TMDBContent] = []
+            var tmdbResults: [TMDBContent] = []
             
             switch params.searchStrategy {
             case .actorSearch:
@@ -198,7 +201,7 @@ class ChatViewModel: ObservableObject {
                 .filter { $0.voteAverage != nil } // Remove unrated content
                 .sorted { ($0.voteAverage ?? 0) > ($1.voteAverage ?? 0) } // Sort by rating
             
-            let recommendations = qualityFiltered.prefix(6).compactMap { tmdbMovie in
+            let recommendations = qualityFiltered.prefix(10).compactMap { tmdbMovie in
                 convertTMDBToContent(tmdbMovie)
             }
             
@@ -212,7 +215,7 @@ class ChatViewModel: ObservableObject {
     }
 
     // NEW: Search by year range (for decade-based queries)
-    private func searchByYearRange(_ yearRange: ClosedRange<Int>) async throws -> [TMDBService.TMDBContent] {
+    private func searchByYearRange(_ yearRange: ClosedRange<Int>) async throws -> [TMDBContent] {
         // For decade searches, let's try popular movies from that era
         // This is a simplified approach - you could make this more sophisticated
         let midYear = (yearRange.lowerBound + yearRange.upperBound) / 2
@@ -223,7 +226,7 @@ class ChatViewModel: ObservableObject {
     }
 
     // NEW: Search with year and genre filtering - FIXED for better decade searches
-    private func searchWithYearAndGenre(genre: String, yearRange: ClosedRange<Int>) async throws -> [TMDBService.TMDBContent] {
+    private func searchWithYearAndGenre(genre: String, yearRange: ClosedRange<Int>) async throws -> [TMDBContent] {
         print("🎯 Searching for \(genre) content from \(yearRange)")
         
         // For decade-based searches, we need to use TMDB's discover API with year filters
@@ -275,9 +278,9 @@ class ChatViewModel: ObservableObject {
     }
     
 
-    func searchRomanticComedies(yearRange: ClosedRange<Int>?) async throws -> [TMDBService.TMDBContent] {
+    func searchRomanticComedies(yearRange: ClosedRange<Int>?) async throws -> [TMDBContent] {
         // Use our new multi-genre combination method
-        let romComResults = try await tmdbService.fetchGenreCombination(["Romance", "Comedy"], contentType: .movie)
+        let romComResults = try await movieService.fetchMovieGenreCombination(["Romance", "Comedy"])
         
         // Apply year filtering if specified
         if let yearRange = yearRange {
@@ -296,7 +299,7 @@ class ChatViewModel: ObservableObject {
     }
 
     // NEW: Filter TMDB results by year range
-    private func filterByYearRange(_ results: [TMDBService.TMDBContent], yearRange: ClosedRange<Int>) -> [TMDBService.TMDBContent] {
+    private func filterByYearRange(_ results: [TMDBContent], yearRange: ClosedRange<Int>) -> [TMDBContent] {
         return results.filter { movie in
             // Extract year from release date
             if let dateString = movie.releaseDate ?? movie.firstAirDate,
@@ -324,7 +327,7 @@ class ChatViewModel: ObservableObject {
     }
     
     // NEW: Convert TMDB to Content (matches your existing pattern)
-    private func convertTMDBToContent(_ tmdbMovie: TMDBService.TMDBContent) -> Content {
+    private func convertTMDBToContent(_ tmdbMovie: TMDBContent) -> Content {
         return Content(
             tmdbID: tmdbMovie.id,
             title: tmdbMovie.displayTitle,

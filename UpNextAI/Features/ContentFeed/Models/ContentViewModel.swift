@@ -237,7 +237,7 @@ class ContentViewModel: ObservableObject {
         }
     }
     
-    private func loadRecommendedForUser() async -> [TMDBService.TMDBContent] {
+    private func loadRecommendedForUser() async -> [TMDBContent] {
         print("🚀 loadRecommendedForUser() called")
         
         guard let userProfile = currentUserProfile else {
@@ -253,7 +253,7 @@ class ContentViewModel: ObservableObject {
             return await loadFallbackRecommendations()
         }
         
-        var recommendations: [TMDBService.TMDBContent] = []
+        var recommendations: [TMDBContent] = []
         var seenMovieIds: Set<Int> = []
         
         for genre in favoriteGenres.prefix(4) {
@@ -285,14 +285,14 @@ class ContentViewModel: ObservableObject {
         return finalRecommendations
     }
     
-    private func loadUserWatchlist() async -> [TMDBService.TMDBContent] {
+    private func loadUserWatchlist() async -> [TMDBContent] {
         guard let userProfile = currentUserProfile else { return [] }
         
         do {
             let movieWatchlist = try await userRepository.getPreferences(for: userProfile, type: "movie_watchlist")
             let tvWatchlist = try await userRepository.getPreferences(for: userProfile, type: "tv_watchlist")
             
-            var watchlistContent: [TMDBService.TMDBContent] = []
+            var watchlistContent: [TMDBContent] = []
             
             // Fetch fresh TMDB data for each item
             for preference in movieWatchlist + tvWatchlist {
@@ -308,7 +308,7 @@ class ContentViewModel: ObservableObject {
         }
     }
 
-    private func fetchWatchlistItem(_ preference: UserPreferenceCoreData) async -> TMDBService.TMDBContent? {
+    private func fetchWatchlistItem(_ preference: UserPreferenceCoreData) async -> TMDBContent? {
         do {
             return try await tmdbService.fetchContentById(Int(preference.tmdbId), type: preference.type ?? "")
         } catch {
@@ -414,7 +414,7 @@ class ContentViewModel: ObservableObject {
         sections.append(contentsOf: newSections)
     }
     
-    private func loadFallbackRecommendations() async -> [TMDBService.TMDBContent] {
+    private func loadFallbackRecommendations() async -> [TMDBContent] {
         do {
             let topRated = try await tmdbService.fetchTopRatedMovies()
             return Array(topRated.filter { $0.voteAverage ?? 5.1 > 8.0 }.prefix(20))
@@ -480,7 +480,7 @@ class ContentViewModel: ObservableObject {
 extension ContentViewModel {
 
     /// Add content to watchlist
-    func addToWatchlist(_ content: TMDBService.TMDBContent) {
+    func addToWatchlist(_ content: TMDBContent) {
         print("📚 Added to watchlist: \(content.displayTitle)")
         Task {
             await refresh()
@@ -488,7 +488,7 @@ extension ContentViewModel {
     }
     
     /// Handle content tap - navigate to detail view
-    func handleMovieTap(_ content: TMDBService.TMDBContent) {
+    func handleMovieTap(_ content: TMDBContent) {
         print("🎬 Tapped: \(content.displayTitle)")
         // TODO: Track user engagement for ML
     }

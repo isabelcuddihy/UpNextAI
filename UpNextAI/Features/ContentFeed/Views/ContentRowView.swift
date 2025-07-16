@@ -9,8 +9,8 @@ import SwiftUI
 
 struct ContentRowView: View {
     let title: String
-    let content: [TMDBService.TMDBContent]
-    let onItemTap: (TMDBService.TMDBContent) -> Void
+    let content: [TMDBContent]
+    let onItemTap: (TMDBContent) -> Void
     
     var body: some View {
         VStack(alignment: .leading, spacing: 8) {
@@ -45,7 +45,7 @@ struct ContentRowView: View {
 }
 
 struct ContentPosterView: View {
-    let movie: TMDBService.TMDBContent
+    let movie: TMDBContent
     
     var body: some View {
         VStack(alignment: .leading, spacing: 4) {

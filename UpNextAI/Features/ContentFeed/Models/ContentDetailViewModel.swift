@@ -15,7 +15,7 @@ class ContentDetailViewModel: ObservableObject {
     @Published var contentDetails: ContentDetails?
     @Published var cast: [CastMember] = []
     @Published var crew: [CrewMember] = []
-    @Published var similarContent: [TMDBService.TMDBContent] = []
+    @Published var similarContent: [TMDBContent] = []
     @Published var videos: [VideoContent] = []
     
     @Published var isLoading = false
@@ -53,7 +53,7 @@ class ContentDetailViewModel: ObservableObject {
     
     @Published var watchProviders: WatchProviders?
 
-    func loadDetails(for content: TMDBService.TMDBContent) async {
+    func loadDetails(for content: TMDBContent) async {
         isLoading = true
         errorMessage = nil
         
@@ -72,7 +72,7 @@ class ContentDetailViewModel: ObservableObject {
     }
 
     // ADD THIS METHOD if you don't have it
-    func loadWatchProviders(for content: TMDBService.TMDBContent) async {
+    func loadWatchProviders(for content: TMDBContent) async {
         do {
             let contentType = getContentType(for: content)
             watchProviders = try await tmdbService.fetchWatchProviders(for: content.id, contentType: contentType)
@@ -91,7 +91,7 @@ class ContentDetailViewModel: ObservableObject {
         errorMessage = nil
     }
 
-    func loadWatchlistStatus(for content: TMDBService.TMDBContent, userRepository: UserPreferenceRepository) async {
+    func loadWatchlistStatus(for content: TMDBContent, userRepository: UserPreferenceRepository) async {
         do {
             // Get current user profile
             guard let profile = try await userRepository.getUserProfile() else { return }
@@ -111,7 +111,7 @@ class ContentDetailViewModel: ObservableObject {
         }
     }
 
-    func toggleWatchlist(_ content: TMDBService.TMDBContent, userRepository: UserPreferenceRepository, tabService: TabCommunicationService) async {
+    func toggleWatchlist(_ content: TMDBContent, userRepository: UserPreferenceRepository, tabService: TabCommunicationService) async {
         do {
             guard let profile = try await userRepository.getUserProfile() else { return }
             
@@ -148,7 +148,7 @@ class ContentDetailViewModel: ObservableObject {
     // MARK: - Private Methods
     
     // Helper method to convert content to the right ContentType for TMDBService
-    private func getContentType(for content: TMDBService.TMDBContent) -> TMDBContentType {
+    private func getContentType(for content: TMDBContent) -> TMDBContentType {
         return content.isMovie ? .movie : .tvShow
     }
     
@@ -222,7 +222,7 @@ class ContentDetailViewModel: ObservableObject {
     }
     
     // Updated loadSimilarContent method using the helper
-    func loadSimilarContent(for content: TMDBService.TMDBContent) async {
+    func loadSimilarContent(for content: TMDBContent) async {
         do {
             let contentType = getContentType(for: content)
             similarContent = try await tmdbService.fetchSimilarContent(
@@ -235,7 +235,7 @@ class ContentDetailViewModel: ObservableObject {
         }
     }
     
-    private func loadUserPreferences(for content: TMDBService.TMDBContent) {
+    private func loadUserPreferences(for content: TMDBContent) {
         // TODO: Load from Core Data
         // For now, simulate some preferences
         isLiked = false
@@ -243,7 +243,7 @@ class ContentDetailViewModel: ObservableObject {
         isInWatchlist = false
     }
     
-    private func saveUserInteraction(content: TMDBService.TMDBContent, interactionType: UserInteractionType) {
+    private func saveUserInteraction(content: TMDBContent, interactionType: UserInteractionType) {
         // TODO: Implement Core Data saving
         print("💾 Saving interaction: \(interactionType.rawValue) for \(content.displayTitle)")
         
@@ -261,7 +261,7 @@ class ContentDetailViewModel: ObservableObject {
         // sendInteractionToMLService(interaction)
     }
     
-    private func removeUserInteraction(content: TMDBService.TMDBContent, interactionType: UserInteractionType) {
+    private func removeUserInteraction(content: TMDBContent, interactionType: UserInteractionType) {
         // TODO: Implement Core Data removal
         print("🗑️ Removing interaction: \(interactionType.rawValue) for \(content.displayTitle)")
     }

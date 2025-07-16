@@ -146,8 +146,8 @@ struct Content: Identifiable, Hashable, Codable {
         return formatter.string(from: releaseDate)
     }
 
-    func toTMDBContent() -> TMDBService.TMDBContent {
-        return TMDBService.TMDBContent(
+    func toTMDBContent() -> TMDBContent {
+        return TMDBContent(
             id: self.tmdbID,
             title: self.contentType == .movie ? self.title : nil,
             name: self.contentType == .tvShow ? self.title : nil,
